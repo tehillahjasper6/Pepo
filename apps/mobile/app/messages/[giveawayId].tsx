@@ -3,34 +3,28 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { apiClient } from '../../lib/apiClient';
 import { useAuth } from '../../hooks/useAuth';
+import { useSocket } from '../../hooks/useSocket';
 
 export default function MessageDetailScreen() {
   const router = useRouter();
   const { giveawayId } = useLocalSearchParams<{ giveawayId: string }>();
   const { user, isAuthenticated } = useAuth();
-  const [messages, setMessages] = useState<any[]>([]);
+  const { messages, isConnected, sendMessage, joinGiveaway, leaveGiveaway } = useSocket(giveawayId);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [content, setContent] = useState('');
   const scrollRef = useRef<any>(null);
 
   useEffect(() => {
-    if (giveawayId) fetchMessages();
-  }, [giveawayId]);
-
-  const fetchMessages = async () => {
-    try {
-      setLoading(true);
-      const data = await apiClient.getMessages(giveawayId as string);
-      setMessages(Array.isArray(data) ? data : []);
-      setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: true }), 100);
-    } catch (error) {
-      console.error('Failed to fetch messages:', error);
-      setMessages([]);
-    } finally {
+    if (giveawayId) {
+      joinGiveaway(giveawayId);
       setLoading(false);
     }
-  };
+
+    return () => {
+      if (giveawayId) leaveGiveaway(giveawayId);
+    };
+  }, [giveawayId, joinGiveaway, leaveGiveaway]);
 
   const handleSend = async () => {
     if (!content.trim()) return;
@@ -41,10 +35,7 @@ export default function MessageDetailScreen() {
 
     try {
       setSending(true);
-      const res = await apiClient.sendMessage(giveawayId as string, content.trim());
-      // optimistic append if API returns message
-      const newMsg = res.message || { id: Math.random().toString(), content: content.trim(), sender: user, createdAt: new Date().toISOString() };
-      setMessages((m) => [...m, newMsg]);
+      await sendMessage(content.trim());
       setContent('');
       setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: true }), 100);
     } catch (error) {
@@ -66,7 +57,13 @@ export default function MessageDetailScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView ref={scrollRef} className="flex-1 bg-background-default p-4">
-        <Text className="text-2xl font-semibold mb-4">Conversation</Text>
+        <View className="flex-row items-center justify-between mb-4">
+          <Text className="text-2xl font-semibold">Conversation</Text>
+          <View className="flex-row items-center gap-2">
+            <View className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            <Text className="text-xs text-gray-600">{isConnected ? 'Connected' : 'Offline'}</Text>
+          </View>
+        </View>
 
         {messages.length === 0 ? (
           <View className="bg-white rounded-2xl p-6 items-center">

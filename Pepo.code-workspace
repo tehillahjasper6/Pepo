@@ -5,6 +5,6 @@
 		}
 	],
 	"settings": {
-		"CodeGPT.apiKey": "DeepSeek"
+		"CodeGPT.apiKey": "Claude Code"
 	}
 }
