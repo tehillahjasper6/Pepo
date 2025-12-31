@@ -1,0 +1,144 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-neutral-200;
+  }
+  
+  body {
+    @apply text-neutral-900 antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold text-neutral-900;
+  }
+  
+  h1 {
+    @apply text-4xl;
+  }
+  
+  h2 {
+    @apply text-3xl;
+  }
+  
+  h3 {
+    @apply text-2xl;
+  }
+}
+
+@layer components {
+  /* Button Styles */
+  .btn {
+    @apply px-6 py-3 rounded-btn font-medium transition-all duration-200 inline-flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  
+  .btn-primary {
+    @apply bg-primary-500 text-white hover:bg-primary-600 shadow-soft hover:shadow-medium;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-primary-500 border-2 border-primary-500 hover:bg-primary-100;
+  }
+  
+  .btn-disabled {
+    @apply bg-gray-200 text-gray-400 cursor-not-allowed opacity-50;
+  }
+  
+  /* Card Styles */
+  .card {
+    @apply bg-background-card rounded-lg shadow-card p-6;
+  }
+  
+  .card-hover {
+    @apply transition-transform duration-200 hover:scale-[1.02] hover:shadow-medium;
+  }
+  
+  /* Input Styles */
+  .input {
+    @apply w-full px-4 py-3 border-2 border-gray-200 rounded-md focus:border-primary-500 focus:outline-none transition-colors;
+  }
+  
+  /* Badge Styles */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  
+  .badge-primary {
+    @apply bg-primary-100 text-primary-600;
+  }
+  
+  .badge-secondary {
+    @apply bg-secondary-100 text-secondary-600;
+  }
+  
+  .badge-success {
+    @apply bg-green-100 text-green-600;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+
+  @keyframes slide-in {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-scaleIn {
+    animation: scaleIn 0.3s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-progress {
+    animation: progress 2s ease-in-out infinite;
+  }
+
+  @keyframes progress {
+    0% {
+      width: 0%;
+    }
+    50% {
+      width: 70%;
+    }
+    100% {
+      width: 100%;
+    }
+  }
+}

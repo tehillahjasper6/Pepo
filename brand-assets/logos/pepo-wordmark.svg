@@ -1,0 +1,21 @@
+<!-- PEPO Wordmark -->
+<svg width="400" height="120" viewBox="0 0 400 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bee Icon (Small) -->
+  <ellipse cx="35" cy="60" rx="18" ry="22" fill="#F4B400"/>
+  <ellipse cx="35" cy="52" rx="18" ry="3" fill="#1E1E1E" opacity="0.8"/>
+  <ellipse cx="35" cy="62" rx="18" ry="3" fill="#1E1E1E" opacity="0.8"/>
+  <circle cx="35" cy="45" r="14" fill="#FFD15C"/>
+  <circle cx="30" cy="43" r="3" fill="#1E1E1E"/>
+  <circle cx="40" cy="43" r="3" fill="#1E1E1E"/>
+  <ellipse cx="25" cy="55" rx="10" ry="14" fill="white" opacity="0.6" transform="rotate(-20 25 55)"/>
+  <ellipse cx="45" cy="55" rx="10" ry="14" fill="white" opacity="0.6" transform="rotate(20 45 55)"/>
+  
+  <!-- PEPO Text -->
+  <text x="75" y="82" font-family="Poppins, sans-serif" font-size="64" font-weight="700" fill="#1E1E1E">PEPO</text>
+  
+  <!-- Tagline -->
+  <text x="75" y="105" font-family="Poppins, sans-serif" font-size="14" font-weight="400" fill="#6BBF8E" letter-spacing="0.5">Give Freely. Live Lightly.</text>
+</svg>
+
+
+

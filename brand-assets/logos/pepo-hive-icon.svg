@@ -1,0 +1,35 @@
+<!-- PEPO Hive Icon - Honeycomb Pattern -->
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Circle -->
+  <circle cx="100" cy="100" r="95" fill="#FFF9EE"/>
+  
+  <!-- Honeycomb Cells -->
+  <!-- Center -->
+  <path d="M100 70 L115 78.66 L115 95.98 L100 104.64 L85 95.98 L85 78.66 Z" fill="#F4B400" stroke="#E6A800" stroke-width="2"/>
+  
+  <!-- Top -->
+  <path d="M100 40 L115 48.66 L115 65.98 L100 74.64 L85 65.98 L85 48.66 Z" fill="#FFD15C" stroke="#F4B400" stroke-width="2"/>
+  
+  <!-- Top Right -->
+  <path d="M126 55 L141 63.66 L141 80.98 L126 89.64 L111 80.98 L111 63.66 Z" fill="#FFD15C" stroke="#F4B400" stroke-width="2"/>
+  
+  <!-- Bottom Right -->
+  <path d="M126 85 L141 93.66 L141 110.98 L126 119.64 L111 110.98 L111 93.66 Z" fill="#FFD15C" stroke="#F4B400" stroke-width="2"/>
+  
+  <!-- Bottom -->
+  <path d="M100 100 L115 108.66 L115 125.98 L100 134.64 L85 125.98 L85 108.66 Z" fill="#FFD15C" stroke="#F4B400" stroke-width="2"/>
+  
+  <!-- Bottom Left -->
+  <path d="M74 85 L89 93.66 L89 110.98 L74 119.64 L59 110.98 L59 93.66 Z" fill="#FFD15C" stroke="#F4B400" stroke-width="2"/>
+  
+  <!-- Top Left -->
+  <path d="M74 55 L89 63.66 L89 80.98 L74 89.64 L59 80.98 L59 63.66 Z" fill="#FFD15C" stroke="#F4B400" stroke-width="2"/>
+  
+  <!-- Center Bee Symbol -->
+  <circle cx="100" cy="87" r="8" fill="#1E1E1E"/>
+  <ellipse cx="95" cy="87" rx="2" ry="3" fill="#F4B400"/>
+  <ellipse cx="105" cy="87" rx="2" ry="3" fill="#F4B400"/>
+</svg>
+
+
+

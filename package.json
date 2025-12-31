@@ -1,0 +1,39 @@
+{
+  "name": "pepo-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PEPO - Community-based giving and sharing platform",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "start": "turbo run start",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "backend:dev": "npm run start:dev --workspace=backend",
+    "web:dev": "npm run dev --workspace=@pepo/web",
+    "mobile:dev": "npm start --workspace=@pepo/mobile",
+    "admin:dev": "npm run dev --workspace=@pepo/admin",
+    "db:generate": "npm run prisma:generate --workspace=backend",
+    "db:migrate": "npm run prisma:migrate --workspace=backend",
+    "db:seed": "npm run prisma:seed --workspace=backend"
+  },
+  "devDependencies": {
+    "prettier": "^3.1.1",
+    "turbo": "^1.11.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@rive-app/react-canvas": "^4.25.1",
+    "lottie-react": "^2.4.1"
+  }
+}

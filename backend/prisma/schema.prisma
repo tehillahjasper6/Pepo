@@ -1,0 +1,675 @@
+// PEPO Database Schema
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ENUMS
+// ════════════════════════════════════════════════════════════════════════════
+
+enum UserRole {
+  USER
+  NGO
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum GiveawayStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  COMPLETED
+  CANCELLED
+}
+
+enum EligibilityGender {
+  MALE
+  FEMALE
+  OTHER
+  ALL
+}
+
+enum ParticipantStatus {
+  INTERESTED
+  SELECTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum NotificationType {
+  WINNER_SELECTED
+  DRAW_CLOSED
+  NEW_MESSAGE
+  GIVEAWAY_REMINDER
+  NGO_VERIFIED
+  SYSTEM_ALERT
+}
+
+enum MessageStatus {
+  SENT
+  DELIVERED
+  READ
+}
+
+enum NGOStatus {
+  PENDING_VERIFICATION
+  VERIFIED
+  REJECTED
+  SUSPENDED
+  EXPIRED
+}
+
+enum OrganizationType {
+  NGO
+  CHARITY
+  FOUNDATION
+  FAITH_BASED
+  COMMUNITY_ORG
+  OTHER
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUEST_INFO
+}
+
+enum ReportStatus {
+  PENDING
+  INVESTIGATING
+  RESOLVED
+  DISMISSED
+}
+
+enum TransparencyReportStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum ReportFrequency {
+  QUARTERLY
+  ANNUAL
+}
+
+enum FocusArea {
+  EDUCATION
+  HEALTH
+  RELIEF
+  WOMEN
+  YOUTH
+  ENVIRONMENT
+  OTHER
+}
+
+enum ConfidenceLevel {
+  EMERGING
+  TRUSTED
+  HIGHLY_TRUSTED
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// USER MODELS
+// ════════════════════════════════════════════════════════════════════════════
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  passwordHash  String?
+  name          String
+  avatar        String?
+  city          String?
+  phone         String?  @unique
+  phoneVerified Boolean  @default(false)
+  gender        Gender   @default(PREFER_NOT_TO_SAY)
+  role          UserRole @default(USER)
+  isActive      Boolean  @default(true)
+
+  // OAuth
+  googleId String? @unique
+  appleId  String? @unique
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  lastLoginAt DateTime?
+
+  // Relations
+  giveaways        Giveaway[]
+  participations   Participant[]
+  sentMessages     Message[]      @relation("SentMessages")
+  receivedMessages Message[]      @relation("ReceivedMessages")
+  notifications    Notification[]
+  reports          Report[]       @relation("ReportedBy")
+  reportedReports  Report[]       @relation("ReportedUser")
+  ngoProfile       NGOProfile?
+  verifiedNGOs     NGOProfile[]   @relation("VerifiedNGOs")
+  ngoReviews       NGOReview[]    @relation("NGOReviews")
+  ngoFeedback      NGOFeedback[]  @relation("NGOFeedback")
+  auditLogs        AuditLog[]
+  otpCodes         OTPCode[]
+  deviceTokens     DeviceToken[]
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model OTPCode {
+  id        String   @id @default(uuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+  @@map("otp_codes")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// NGO MODELS
+// ════════════════════════════════════════════════════════════════════════════
+
+model NGOProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  // Organization Details
+  organizationName   String
+  organizationType   OrganizationType
+  country            String
+  city               String
+  address            String
+  yearEstablished    Int?
+  registrationNumber String           @unique
+  taxExemptionId     String?
+  website            String?
+  officialEmail      String
+  officialPhone      String
+
+  // Primary Contact
+  contactName       String
+  contactRole       String
+  contactEmail      String
+  contactPhone      String
+  contactNationalId String?
+
+  // Verification
+  status           NGOStatus @default(PENDING_VERIFICATION)
+  verifiedAt       DateTime?
+  verifiedBy       String?
+  verifiedByUserId String?
+  verifiedByUser   User?     @relation("VerifiedNGOs", fields: [verifiedByUserId], references: [id])
+  rejectionReason  String?
+  expiresAt        DateTime? // Annual re-validation
+
+  // Impact metrics
+  totalGiveaways     Int   @default(0)
+  totalBeneficiaries Int   @default(0)
+  trustScore         Float @default(0.0)
+
+  // Public Profile Fields
+  logo                       String?
+  missionStatement           String?
+  focusAreas                 FocusArea[]
+  hasGovernmentRecognition   Boolean     @default(false)
+  governmentRecognitionBadge String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns           Campaign[]
+  documents           NGODocument[]
+  reviews             NGOReview[]
+  pickupPoints        PickupPoint[]
+  transparencyReports NGOTransparencyReport[]
+  confidenceScores    NGOConfidenceScore[]
+  feedback            NGOFeedback[]
+
+  @@index([status])
+  @@index([registrationNumber])
+  @@index([country])
+  @@map("ngo_profiles")
+}
+
+model NGODocument {
+  id           String   @id @default(uuid())
+  ngoProfileId String
+  documentType String // REGISTRATION_CERTIFICATE, TAX_EXEMPTION, NATIONAL_ID, OTHER
+  fileName     String
+  fileUrl      String
+  fileSize     Int?
+  mimeType     String?
+  uploadedAt   DateTime @default(now())
+
+  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+
+  @@index([ngoProfileId])
+  @@index([documentType])
+  @@map("ngo_documents")
+}
+
+model NGOReview {
+  id            String       @id @default(uuid())
+  ngoProfileId  String
+  reviewerId    String
+  status        ReviewStatus @default(PENDING)
+  notes         String?
+  riskFlags     Json? // Array of risk flags
+  requestedInfo String? // If REQUEST_INFO status
+  reviewedAt    DateTime     @default(now())
+
+  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+  reviewer   User       @relation("NGOReviews", fields: [reviewerId], references: [id])
+
+  @@index([ngoProfileId])
+  @@index([reviewerId])
+  @@index([status])
+  @@map("ngo_reviews")
+}
+
+model PickupPoint {
+  id           String   @id @default(uuid())
+  ngoProfileId String
+  name         String
+  address      String
+  city         String
+  country      String
+  latitude     Float?
+  longitude    Float?
+  contactPhone String?
+  hours        String? // Operating hours
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+  pickups    Pickup[]
+
+  @@index([ngoProfileId])
+  @@index([isActive])
+  @@map("pickup_points")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// NGO TRUST FRAMEWORK MODELS
+// ════════════════════════════════════════════════════════════════════════════
+
+model NGOTransparencyReport {
+  id           String @id @default(uuid())
+  ngoProfileId String
+
+  // Reporting Period
+  reportFrequency ReportFrequency
+  periodStart     DateTime
+  periodEnd       DateTime
+
+  // Campaign Summary
+  campaignCount    Int      @default(0)
+  itemsDistributed Int      @default(0)
+  locationsServed  String[] // Array of locations
+
+  // Financial Summary (optional, range-based)
+  fundsReceivedMin Float?
+  fundsReceivedMax Float?
+  fundsUtilized    Json? // Categories breakdown
+
+  // Impact Metrics
+  beneficiariesReached Int   @default(0)
+  successStories       Json? // Array of {title, description, images[]}
+
+  // Challenges & Lessons
+  challenges     String?
+  lessonsLearned String?
+
+  // Supporting Documents
+  supportingDocuments String[] // Array of file URLs
+
+  // Status & Review
+  status          TransparencyReportStatus @default(DRAFT)
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewNotes     String?
+  rejectionReason String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+
+  @@index([ngoProfileId])
+  @@index([status])
+  @@index([periodStart, periodEnd])
+  @@map("ngo_transparency_reports")
+}
+
+model NGOConfidenceScore {
+  id           String @id @default(uuid())
+  ngoProfileId String
+
+  // Score Components (0-100)
+  verificationScore Float @default(0) // Baseline: verified = 30
+  transparencyScore Float @default(0) // Report consistency: 0-25
+  activityScore     Float @default(0) // Recent activity: 0-20
+  completionScore   Float @default(0) // Campaign completion: 0-15
+  feedbackScore     Float @default(0) // User feedback: 0-10
+
+  // Additional Factors
+  hasGovernmentRecognition Boolean @default(false) // +5 bonus
+  adminTrustFlags          Int     @default(0) // -5 to +5 adjustment
+
+  // Calculated Score
+  totalScore      Float           @default(0)
+  confidenceLevel ConfidenceLevel @default(EMERGING)
+
+  // Metadata
+  calculatedAt     DateTime @default(now())
+  factorsBreakdown Json? // Detailed breakdown for audit
+
+  // Relations
+  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+
+  @@index([ngoProfileId])
+  @@index([calculatedAt])
+  @@index([totalScore])
+  @@map("ngo_confidence_scores")
+}
+
+model NGOFeedback {
+  id           String @id @default(uuid())
+  ngoProfileId String
+  userId       String
+
+  // Feedback (qualitative, not star-based)
+  feedbackText String
+  isPositive   Boolean @default(true)
+
+  // Context
+  relatedGiveawayId String?
+  relatedCampaignId String?
+
+  // Moderation
+  isApproved  Boolean   @default(false)
+  moderatedAt DateTime?
+  moderatedBy String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+  user       User       @relation("NGOFeedback", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ngoProfileId])
+  @@index([userId])
+  @@index([isApproved])
+  @@map("ngo_feedback")
+}
+
+model Pickup {
+  id            String    @id @default(uuid())
+  winnerId      String    @unique
+  pickupPointId String?
+  pickupCode    String    @unique
+  qrCodeUrl     String?
+  scheduledAt   DateTime?
+  completedAt   DateTime?
+  verifiedBy    String? // Admin/NGO user who verified
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  winner      Winner       @relation(fields: [winnerId], references: [id], onDelete: Cascade)
+  pickupPoint PickupPoint? @relation(fields: [pickupPointId], references: [id], onDelete: SetNull)
+
+  @@index([pickupCode])
+  @@index([pickupPointId])
+  @@map("pickups")
+}
+
+model Campaign {
+  id           String  @id @default(uuid())
+  ngoProfileId String
+  title        String
+  description  String
+  slug         String  @unique
+  coverImage   String?
+
+  // Schedule
+  startDate     DateTime?
+  endDate       DateTime?
+  isRecurring   Boolean   @default(false)
+  recurringRule Json?
+
+  // Metrics
+  totalGiveaways Int @default(0)
+  totalReached   Int @default(0)
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+  giveaways  Giveaway[]
+
+  @@index([ngoProfileId])
+  @@index([slug])
+  @@map("campaigns")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// GIVEAWAY MODELS
+// ════════════════════════════════════════════════════════════════════════════
+
+model Giveaway {
+  id         String  @id @default(uuid())
+  userId     String
+  campaignId String?
+
+  title       String
+  description String
+  images      String[]
+  category    String?
+  location    String
+
+  // Eligibility
+  eligibilityGender EligibilityGender @default(ALL)
+  eligibilityAgeMin Int?
+  eligibilityAgeMax Int?
+
+  // Quantity & Distribution
+  quantity     Int @default(1)
+  winnersCount Int @default(0)
+
+  // Status & Timing
+  status      GiveawayStatus @default(DRAFT)
+  publishedAt DateTime?
+  expiresAt   DateTime?
+  closedAt    DateTime?
+
+  // Draw
+  drawCompletedAt DateTime?
+  drawLockKey     String?   @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign     Campaign?     @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  participants Participant[]
+  winners      Winner[]
+  messages     Message[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([campaignId])
+  @@index([closedAt])
+  @@map("giveaways")
+}
+
+model Participant {
+  id         String            @id @default(uuid())
+  userId     String
+  giveawayId String
+  status     ParticipantStatus @default(INTERESTED)
+  createdAt  DateTime          @default(now())
+  updatedAt  DateTime          @updatedAt
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, giveawayId])
+  @@index([giveawayId])
+  @@index([status])
+  @@map("participants")
+}
+
+model Winner {
+  id         String   @id @default(uuid())
+  giveawayId String
+  userId     String
+  drawNumber Int      @default(1)
+  selectedAt DateTime @default(now())
+
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  pickup   Pickup?
+
+  @@unique([giveawayId, userId, drawNumber])
+  @@index([giveawayId])
+  @@map("winners")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MESSAGING
+// ════════════════════════════════════════════════════════════════════════════
+
+model Message {
+  id         String        @id @default(uuid())
+  giveawayId String
+  senderId   String
+  receiverId String
+  content    String
+  status     MessageStatus @default(SENT)
+  readAt     DateTime?
+  createdAt  DateTime      @default(now())
+
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+  sender   User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([giveawayId])
+  @@index([senderId])
+  @@index([receiverId])
+  @@map("messages")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ════════════════════════════════════════════════════════════════════════════
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  data      Json?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String // JSON stringified push subscription
+  platform  String   @default("web") // web, ios, android
+  deviceId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([platform])
+  @@map("device_tokens")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// REPORTS & MODERATION
+// ════════════════════════════════════════════════════════════════════════════
+
+model Report {
+  id           String       @id @default(uuid())
+  reportedBy   String
+  reportedUser String?
+  giveawayId   String?
+  reason       String
+  description  String?
+  status       ReportStatus @default(PENDING)
+  resolvedAt   DateTime?
+  resolvedBy   String?
+  resolution   String?
+  createdAt    DateTime     @default(now())
+
+  reporter User  @relation("ReportedBy", fields: [reportedBy], references: [id], onDelete: Cascade)
+  reported User? @relation("ReportedUser", fields: [reportedUser], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([reportedBy])
+  @@map("reports")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// AUDIT & LOGGING
+// ════════════════════════════════════════════════════════════════════════════
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entity])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
