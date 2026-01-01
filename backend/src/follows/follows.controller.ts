@@ -25,7 +25,8 @@ import { validate as uuidValidate } from 'uuid';
 import { FollowsService } from './follows.service';
 import { PaginationDto } from './dto/pagination.dto';
 import { FollowFilterDto } from './dto/follow-filter.dto';
-import { BatchFollowDto, MuteNGODto } from './dto/follow-response.dto';
+import { BatchFollowDto } from './dto/batch-follow.dto';
+import { MuteNGODto } from './dto/follow-response.dto';
 
 /**
  * FollowsController
@@ -302,7 +303,7 @@ export class FollowsController {
   @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
-  @Deprecated()
+  @ApiOperation({ deprecated: true, summary: 'Get my follows (deprecated)' })
   async myFollows(@Request() req) {
     return this.followsService.listFollowedNGOs(req.user.id);
   }
