@@ -53,6 +53,7 @@ enum NotificationType {
   NEW_MESSAGE
   GIVEAWAY_REMINDER
   NGO_VERIFIED
+  NGO_NEW_POST
   SYSTEM_ALERT
 }
 
@@ -143,26 +144,46 @@ model User {
   googleId String? @unique
   appleId  String? @unique
 
+  // Gamification
+  gamificationPoints Int @default(0)
+
+  // Identity Verification
+  idVerified Boolean @default(false)
+
   // Timestamps
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
 
   // Relations
-  giveaways        Giveaway[]
-  participations   Participant[]
-  sentMessages     Message[]      @relation("SentMessages")
-  receivedMessages Message[]      @relation("ReceivedMessages")
-  notifications    Notification[]
-  reports          Report[]       @relation("ReportedBy")
-  reportedReports  Report[]       @relation("ReportedUser")
-  ngoProfile       NGOProfile?
-  verifiedNGOs     NGOProfile[]   @relation("VerifiedNGOs")
-  ngoReviews       NGOReview[]    @relation("NGOReviews")
-  ngoFeedback      NGOFeedback[]  @relation("NGOFeedback")
-  auditLogs        AuditLog[]
-  otpCodes         OTPCode[]
-  deviceTokens     DeviceToken[]
+  giveaways               Giveaway[]
+  participations          Participant[]
+  sentMessages            Message[]                @relation("SentMessages")
+  receivedMessages        Message[]                @relation("ReceivedMessages")
+  notifications           Notification[]
+  reports                 Report[]                 @relation("ReportedBy")
+  reportedReports         Report[]                 @relation("ReportedUser")
+  winners                 Winner[]
+  ngoProfile              NGOProfile?
+  verifiedNGOs            NGOProfile[]             @relation("VerifiedNGOs")
+  ngoReviews              NGOReview[]              @relation("NGOReviews")
+  ngoFeedback             NGOFeedback[]            @relation("NGOFeedback")
+  auditLogs               AuditLog[]
+  otpCodes                OTPCode[]
+  deviceTokens            DeviceToken[]
+  badgeAssignments        BadgeAssignment[]
+  trustScore              TrustScore?
+  givenFeedback           TransactionFeedback[]    @relation("FeedbackGiver")
+  receivedFeedback        TransactionFeedback[]    @relation("FeedbackReceiver")
+  fraudFlags              FraudFlag[]
+  fraudReviews            FraudFlag[]              @relation("FraudReviewer")
+  environmentalImpact     EnvironmentalImpact?
+  smartMatches            SmartMatchingScore[]
+  follows                 Follow[]
+  notificationPreferences NotificationPreference[]
+  digestPreference        UserDigestPreference?
+  campaignReminderLogs    CampaignReminderLog[]
+  followSuggestions       FollowSuggestion[]
 
   @@index([email])
   @@index([role])
@@ -238,14 +259,18 @@ model NGOProfile {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user                User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campaigns           Campaign[]
-  documents           NGODocument[]
-  reviews             NGOReview[]
-  pickupPoints        PickupPoint[]
-  transparencyReports NGOTransparencyReport[]
-  confidenceScores    NGOConfidenceScore[]
-  feedback            NGOFeedback[]
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaigns               Campaign[]
+  documents               NGODocument[]
+  reviews                 NGOReview[]
+  pickupPoints            PickupPoint[]
+  transparencyReports     NGOTransparencyReport[]
+  confidenceScores        NGOConfidenceScore[]
+  feedback                NGOFeedback[]
+  badgeAssignments        BadgeAssignment[]
+  followers               Follow[]
+  notificationPreferences NotificationPreference[]
+  suggestedToUsers        FollowSuggestion[]
 
   @@index([status])
   @@index([registrationNumber])
@@ -399,6 +424,164 @@ model NGOConfidenceScore {
   @@map("ngo_confidence_scores")
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// BADGE SYSTEM MODELS
+// ════════════════════════════════════════════════════════════════════════════
+
+model BadgeDefinition {
+  id          String   @id @default(uuid())
+  code        String   @unique // machine friendly id (e.g. FIRST_GIVER)
+  name        String
+  description String
+  criteria    Json? // structured criteria for audit and docs
+  icon        String? // icon path or identifier
+  color       String? // hex or token name
+  isNGO       Boolean  @default(false) // if badge applies to NGO profiles
+  isAutoAward Boolean  @default(true) // whether system can auto-award
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignments BadgeAssignment[]
+
+  @@map("badge_definitions")
+}
+
+model BadgeAssignment {
+  id           String   @id @default(uuid())
+  badgeId      String
+  userId       String?
+  ngoProfileId String?
+  giveawayId   String?
+  awardedById  String? // admin user id if awarded manually by admin
+  awardedAt    DateTime @default(now())
+  reason       String? // optional reason or evidence
+  isRevoked    Boolean  @default(false)
+
+  badge      BadgeDefinition @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user       User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ngoProfile NGOProfile?     @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([badgeId, userId], name: "unique_badge_user")
+  @@unique([badgeId, ngoProfileId], name: "unique_badge_ngo")
+  @@index([userId])
+  @@index([ngoProfileId])
+  @@index([badgeId])
+  @@map("badge_assignments")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// TRUST & FEEDBACK SYSTEM
+// ════════════════════════════════════════════════════════════════════════════
+
+model TrustScore {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  givingScore        Float    @default(0) // 0-100: based on successful gives
+  receivingScore     Float    @default(0) // 0-100: based on successful receives
+  feedbackScore      Float    @default(0) // 0-100: community feedback average
+  completionRate     Float    @default(0) // 0-100: % of started vs completed
+  responseTime       Float    @default(0) // hours average to respond
+  totalScore         Float    @default(0) // 0-100: weighted average
+  trustLevel         String   @default("NEW") // NEW, EMERGING, TRUSTED, HIGHLY_TRUSTED
+  successfulGives    Int      @default(0)
+  successfulReceives Int      @default(0)
+  totalInteractions  Int      @default(0)
+  negativeReports    Int      @default(0) // Count of reports against user
+  calculatedAt       DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([totalScore])
+  @@index([trustLevel])
+  @@map("trust_scores")
+}
+
+model TransactionFeedback {
+  id                   String   @id @default(uuid())
+  giverId              String
+  receiverId           String
+  giveawayId           String
+  itemCondition        String   @default("as-described") // as-described, better, worse
+  communicationQuality String   @default("good") // excellent, good, poor
+  wouldRecommend       Boolean  @default(true)
+  comments             String?
+  rating               Int      @default(5) // 1-5 stars
+  flagged              Boolean  @default(false) // if inappropriate
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  giver    User     @relation("FeedbackGiver", fields: [giverId], references: [id], onDelete: Cascade)
+  receiver User     @relation("FeedbackReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+
+  @@unique([giverId, receiverId, giveawayId], name: "unique_transaction_feedback")
+  @@index([giverId])
+  @@index([receiverId])
+  @@index([giveawayId])
+  @@index([flagged])
+  @@map("transaction_feedback")
+}
+
+model FraudFlag {
+  id          String    @id @default(uuid())
+  userId      String
+  riskScore   Float     @default(0) // 0-100
+  flagType    String // rapid_giveaway, new_account_spike, multiple_reports
+  description String
+  action      String    @default("none") // none, warning, review, suspend
+  reviewedAt  DateTime?
+  reviewedBy  String?
+  resolution  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewAdmin User? @relation("FraudReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([riskScore])
+  @@index([action])
+  @@map("fraud_flags")
+}
+
+model EnvironmentalImpact {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+  estimatedCO2Saved      Float    @default(0) // kg
+  estimatedWasteDiverted Float    @default(0) // kg
+  itemsCategoryBreakdown Json? // { category: count }
+  updatedAt              DateTime @updatedAt
+  createdAt              DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("environmental_impact")
+}
+
+model SmartMatchingScore {
+  id               String   @id @default(uuid())
+  userId           String
+  giveawayId       String
+  matchScore       Float    @default(0) // 0-100
+  proximity        Float    @default(0) // distance factor
+  categoryMatch    Float    @default(0) // category interest
+  timeAvailability Float    @default(0) // time match
+  trustAlignment   Float    @default(0) // giver trust score alignment
+  calculatedAt     DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, giveawayId], name: "unique_match_score")
+  @@index([userId])
+  @@index([giveawayId])
+  @@index([matchScore])
+  @@map("smart_matching_scores")
+}
+
 model NGOFeedback {
   id           String @id @default(uuid())
   ngoProfileId String
@@ -474,8 +657,10 @@ model Campaign {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ngoProfile NGOProfile @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
-  giveaways  Giveaway[]
+  ngoProfile             NGOProfile                @relation(fields: [ngoProfileId], references: [id], onDelete: Cascade)
+  giveaways              Giveaway[]
+  reminderSettings       CampaignReminderSetting[]
+  campaignReminderLogs   CampaignReminderLog[]
 
   @@index([ngoProfileId])
   @@index([slug])
@@ -520,11 +705,13 @@ model Giveaway {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  campaign     Campaign?     @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign     Campaign?             @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   participants Participant[]
   winners      Winner[]
   messages     Message[]
+  feedback     TransactionFeedback[]
+  smartMatches SmartMatchingScore[]
 
   @@index([userId])
   @@index([status])
@@ -560,6 +747,8 @@ model Winner {
   giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
   pickup   Pickup?
 
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([giveawayId, userId, drawNumber])
   @@index([giveawayId])
   @@map("winners")
@@ -594,14 +783,16 @@ model Message {
 // ════════════════════════════════════════════════════════════════════════════
 
 model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  type      NotificationType
-  title     String
-  message   String
-  data      Json?
-  isRead    Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id          String           @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  referenceId String? // e.g. giveaway id
+  link        String? // deep link to resource
+  data        Json?
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -672,4 +863,147 @@ model AuditLog {
   @@index([entity])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// Follow relationships (users -> ngo profiles)
+model Follow {
+  id        String   @id @default(uuid())
+  userId    String
+  ngoId     String
+  createdAt DateTime @default(now())
+
+  user User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ngo  NGOProfile @relation(fields: [ngoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ngoId])
+  @@index([userId])
+  @@index([ngoId])
+  @@map("follows")
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// DIGEST & REMINDER NOTIFICATION MODELS
+// ════════════════════════════════════════════════════════════════════════════
+
+enum DigestFrequency {
+  DAILY
+  WEEKLY
+}
+
+enum DigestChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+// User digest notification preferences
+model UserDigestPreference {
+  id                String          @id @default(uuid())
+  userId            String
+  frequency         DigestFrequency @default(DAILY)
+  isEnabled         Boolean         @default(true)
+  channels          DigestChannel[] @default([IN_APP])
+  lastDigestSentAt  DateTime?
+  nextScheduledAt   DateTime?
+  includeNewPosts   Boolean         @default(true)
+  includeCampaigns  Boolean         @default(true)
+  includeCompleted  Boolean         @default(false)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@index([userId])
+  @@index([nextScheduledAt])
+  @@map("user_digest_preferences")
+}
+
+enum ReminderType {
+  CAMPAIGN_LAUNCH_SOON
+  CAMPAIGN_ENDING
+  CAMPAIGN_LAUNCH_7DAYS
+  CAMPAIGN_LAUNCH_24HOURS
+  CAMPAIGN_LAUNCH_SAME_DAY
+}
+
+// Campaign reminder settings
+model CampaignReminderSetting {
+  id                String       @id @default(uuid())
+  campaignId        String
+  reminderType      ReminderType
+  isEnabled         Boolean      @default(true)
+  sentAt            DateTime?
+  nextReminderAt    DateTime?
+  cooldownMinutes   Int          @default(60)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, reminderType])
+  @@index([campaignId])
+  @@index([nextReminderAt])
+  @@map("campaign_reminder_settings")
+}
+
+// Track sent campaign reminders to prevent duplicates
+model CampaignReminderLog {
+  id        String   @id @default(uuid())
+  userId    String
+  campaignId String
+  reminderType ReminderType
+  sentAt    DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, campaignId, reminderType])
+  @@index([userId])
+  @@index([campaignId])
+  @@index([sentAt])
+  @@map("campaign_reminder_logs")
+}
+
+// Follow suggestions based on user behavior
+model FollowSuggestion {
+  id                String   @id @default(uuid())
+  userId            String
+  suggestedNGOId    String
+  confidenceScore   Float    @default(0.5)
+  reason            String? // "category_match", "popular_ngo", "location_based", etc.
+  signalWeight      Json? // Weighted signals used for ranking
+  isViewed          Boolean  @default(false)
+  isFollowed        Boolean  @default(false)
+  isIgnored         Boolean  @default(false)
+  viewedAt          DateTime?
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime? // Suggestion expires after a certain period
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ngo  NGOProfile  @relation(fields: [suggestedNGOId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, suggestedNGOId])
+  @@index([userId])
+  @@index([suggestedNGOId])
+  @@index([confidenceScore, createdAt])
+  @@map("follow_suggestions")
+}
+
+// Notification preferences: global or per-ngo
+model NotificationPreference {
+  id        String           @id @default(uuid())
+  userId    String
+  ngoId     String? // null = global preference
+  type      NotificationType
+  isEnabled Boolean          @default(true)
+  createdAt DateTime         @default(now())
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ngo  NGOProfile? @relation(fields: [ngoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, ngoId, type])
+  @@index([userId])
+  @@index([ngoId])
+  @@map("notification_preferences")
 }

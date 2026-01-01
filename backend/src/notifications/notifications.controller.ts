@@ -56,5 +56,25 @@ export class NotificationsController {
   async unregisterDevice(@Request() req, @Body() body: { subscription: any }) {
     return this.pushService.unregisterDevice(req.user.id, body.subscription);
   }
+
+  @Get('preferences')
+  @ApiOperation({ summary: 'Get notification preferences' })
+  async getPreferences(@Request() req) {
+    return this.notificationsService.getPreferences(req.user.id);
+  }
+
+  @Put('preferences')
+  @ApiOperation({ summary: 'Update notification preference' })
+  async setPreference(
+    @Request() req,
+    @Body() body: { type: string; isEnabled: boolean; ngoId?: string },
+  ) {
+    return this.notificationsService.setPreference(
+      req.user.id,
+      body.type as any,
+      body.isEnabled,
+      body.ngoId,
+    );
+  }
 }
 

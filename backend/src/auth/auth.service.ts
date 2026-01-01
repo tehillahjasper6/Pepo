@@ -45,8 +45,11 @@ export class AuthService {
       
       if (!user) {
         // Create new user (will complete profile later)
+        // Prisma requires an email; create a placeholder unique email derived from phone
+        const placeholderEmail = `${phone.replace(/\D/g, '')}@no-email.pepo`;
         user = await this.prisma.user.create({
           data: {
+            email: placeholderEmail,
             phone,
             name: `User_${phone.slice(-4)}`, // Temporary name
           },
@@ -142,7 +145,7 @@ export class AuthService {
 
     return {
       user: this.sanitizeUser(user),
-      token,
+      access_token: token,
     };
   }
 
@@ -188,7 +191,7 @@ export class AuthService {
 
     return {
       user: this.sanitizeUser(user),
-      token,
+      access_token: token,
     };
   }
 
@@ -203,26 +206,29 @@ export class AuthService {
       user = await this.prisma.user.findUnique({ where: { phone: emailOrPhone } });
     }
 
-    if (!user || !user.passwordHash) {
+    if (!user || (!user.passwordHash && !(user as any).password)) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const hash = user.passwordHash || (user as any).password;
+    const isPasswordValid = await bcrypt.compare(password, hash);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastLoginAt: new Date() },
-    });
+    if ((this.prisma.user as any).update) {
+      await (this.prisma.user as any).update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+    }
 
     const token = this.generateToken(user);
 
     return {
       user: this.sanitizeUser(user),
-      token,
+      access_token: token,
     };
   }
 

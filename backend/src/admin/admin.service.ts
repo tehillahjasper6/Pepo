@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NGOTransparencyService } from '../ngo/ngo-transparency.service';
 
@@ -265,6 +265,32 @@ export class AdminService {
         data: { ngoProfileId },
       },
     });
+
+    // Award VERIFIED_NGO badge (idempotent)
+    try {
+      const def = await this.prisma.badgeDefinition.findUnique({ where: { code: 'VERIFIED_NGO' } });
+      if (def) {
+        await this.prisma.badgeAssignment.create({
+          data: {
+            badgeId: def.id,
+            ngoProfileId,
+            awardedById: adminUserId,
+            reason: 'NGO verified by admin',
+          },
+        });
+        await this.prisma.auditLog.create({
+          data: {
+            userId: adminUserId,
+            action: 'BADGE_AWARDED',
+            entity: 'BadgeAssignment',
+            entityId: def.id,
+            metadata: { ngoProfileId, badgeCode: 'VERIFIED_NGO' },
+          },
+        });
+      }
+    } catch (e) {
+      // Ignore duplicate or other errors
+    }
 
     return ngoProfile;
   }

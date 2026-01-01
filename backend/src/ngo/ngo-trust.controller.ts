@@ -33,7 +33,7 @@ export class NGOTrustController {
   async calculateScore(
     @Param('ngoProfileId') ngoProfileId: string,
     @Request() req
-  ) {
+  ): Promise<any> {
     // Only admins can trigger manual recalculation
     if (req.user.role !== 'ADMIN') {
       throw new Error('Only admins can trigger score calculation');

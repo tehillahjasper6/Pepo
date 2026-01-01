@@ -11,9 +11,15 @@ import { MessagesModule } from './messages/messages.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { NGOModule } from './ngo/ngo.module';
 import { AdminModule } from './admin/admin.module';
+import { BadgesModule } from './badges/badges.module';
+import { TrustModule } from './trust/trust.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { RedisModule } from './redis/redis.module';
 import { WebSocketModule } from './websocket/websocket.module';
+import { WorkersModule } from './workers/workers.module';
+import { DigestModule } from './digests/digest.module';
+import { CampaignReminderModule } from './campaign-reminders/campaign-reminder.module';
+import { FollowSuggestionModule } from './follow-suggestions/follow-suggestion.module';
 
 @Module({
   imports: [
@@ -48,7 +54,13 @@ import { WebSocketModule } from './websocket/websocket.module';
     NotificationsModule,
     NGOModule,
     AdminModule,
+    BadgesModule,
+    TrustModule,
     WebSocketModule,
+    WorkersModule,
+    DigestModule,
+    CampaignReminderModule,
+    FollowSuggestionModule,
   ],
   providers: [
     {

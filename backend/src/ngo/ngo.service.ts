@@ -5,7 +5,9 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { EligibilityGender } from '@prisma/client';
 import { CloudinaryService } from '../cloudinary/cloudinary.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -13,6 +15,7 @@ export class NGOService {
   constructor(
     private prisma: PrismaService,
     private cloudinary: CloudinaryService,
+    private notificationsService: NotificationsService,
   ) {}
 
   /**
@@ -400,7 +403,7 @@ export class NGOService {
             category: giveaway.category,
             location: giveaway.location,
             quantity: giveaway.quantity || 1,
-            eligibilityGender: giveaway.eligibilityGender || 'ALL',
+            eligibilityGender: (giveaway.eligibilityGender as any) || EligibilityGender.ALL,
             eligibilityAgeMin: giveaway.eligibilityAgeMin,
             eligibilityAgeMax: giveaway.eligibilityAgeMax,
             images: giveaway.images || [],
@@ -430,6 +433,19 @@ export class NGOService {
           increment: createdGiveaways.length,
         },
       },
+    });
+
+    // Notify followers about new giveaways (async, don't await)
+    createdGiveaways.forEach((giveaway) => {
+      this.notificationsService
+        .enqueueNGOPostNotification(
+          ngoProfile.id,
+          giveaway.id,
+          `New item from ${ngoProfile.organizationName}`,
+          `${giveaway.title} (${giveaway.quantity} available)`,
+          `/giveaway/${giveaway.id}`,
+        )
+        .catch((err) => console.error('Failed to enqueue notification:', err));
     });
 
     return {
@@ -538,7 +554,86 @@ export class NGOService {
       },
     });
 
-    return updated;
+      // After marking pickup completed, treat this as a successful give
+      try {
+        // Determine the giver (owner of giveaway)
+        const winner = await this.prisma.winner.findUnique({
+          where: { id: updated.winner.id },
+          include: { giveaway: true, user: true },
+        });
+
+        const giverId = winner?.giveaway?.userId;
+
+        if (giverId) {
+          // Count total successful gives by this giver (pickups with completedAt)
+          const successfulCount = await this.prisma.pickup.count({
+            where: {
+              completedAt: { not: null },
+              winner: {
+                giveaway: {
+                  userId: giverId,
+                },
+              },
+            },
+          });
+
+          // Helper to award a badge by code to a user (idempotent)
+          const awardBadgeToUser = async (badgeCode: string, userIdToAward: string, reason?: string) => {
+            const def = await this.prisma.badgeDefinition.findUnique({ where: { code: badgeCode } });
+            if (!def) return;
+            try {
+              await this.prisma.badgeAssignment.create({
+                data: {
+                  badgeId: def.id,
+                  userId: userIdToAward,
+                  reason,
+                },
+              });
+              // Audit log
+              await this.prisma.auditLog.create({
+                data: {
+                  userId: userId,
+                  action: 'BADGE_AWARDED',
+                  entity: 'BadgeAssignment',
+                  entityId: def.id,
+                  metadata: { awardedTo: userIdToAward, badgeCode },
+                },
+              });
+            } catch (e) {
+              // Ignore duplicate assignment errors or constraint violations
+            }
+          };
+
+          // FIRST_GIVER: awarded when successfulCount === 1
+          if (successfulCount === 1) {
+            await awardBadgeToUser('FIRST_GIVER', giverId, 'First successful give');
+          }
+
+          // VERIFIED_GIVER: if giver is verified and has at least 1 successful give
+          const giver = await this.prisma.user.findUnique({ where: { id: giverId } });
+          if (giver?.emailVerified && successfulCount >= 1) {
+            await awardBadgeToUser('VERIFIED_GIVER', giverId, 'Verified and successful give');
+          }
+
+          // CONSISTENT_GIVER: awarded when successfulCount >= 10
+          if (successfulCount >= 10) {
+            await awardBadgeToUser('CONSISTENT_GIVER', giverId, '10+ successful gives');
+          }
+        }
+      } catch (err) {
+        // Do not block operation on badge errors; log audit
+        await this.prisma.auditLog.create({
+          data: {
+            userId: userId,
+            action: 'BADGE_ASSIGNMENT_ERROR',
+            entity: 'BadgeAssignment',
+            entityId: updated.id,
+            metadata: { error: err?.message || String(err) },
+          },
+        });
+      }
+
+      return updated;
   }
 
   /**
