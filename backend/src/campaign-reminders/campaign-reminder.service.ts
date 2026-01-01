@@ -54,7 +54,11 @@ export class CampaignReminderService {
         },
         include: {
           reminderSettings: true,
-          ngoProfile: true,
+          ngoProfile: {
+            include: {
+              followers: true,
+            },
+          },
         },
       });
 

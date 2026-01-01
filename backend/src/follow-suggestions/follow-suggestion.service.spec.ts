@@ -17,7 +17,7 @@ describe('FollowSuggestionService', () => {
               findMany: jest.fn(),
               count: jest.fn(),
             },
-            ngoProfile: {
+            nGOProfile: {
               findMany: jest.fn(),
               findUnique: jest.fn(),
             },
