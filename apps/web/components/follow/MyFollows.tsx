@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useMyFollows } from '@/hooks/useFollows';
 import { Loader2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FollowButton } from './FollowButton';
@@ -21,6 +21,7 @@ export function MyFollows({
 }: MyFollowsProps) {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
+  const [searchTerm, setSearchTerm] = useState(search);
   const [category, setCategory] = useState('');
   const [sortBy, setSortBy] = useState<'followedAt' | 'name' | 'impactScore'>('followedAt');
 
@@ -60,6 +61,26 @@ export function MyFollows({
 
   const { data: follows, pagination } = data;
 
+  // Sync local page with server pagination if it differs
+  useEffect(() => {
+    if (pagination?.page && pagination.page !== page) {
+      setPage(pagination.page);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pagination?.page]);
+
+  // Debounce search term updates
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (searchTerm !== search) {
+        setSearch(searchTerm);
+        setPage(1);
+      }
+    }, 400);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
+
   return (
     <div className={`space-y-6 ${className}`}>
       {/* Header */}
@@ -75,18 +96,17 @@ export function MyFollows({
             <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <input
               type="text"
+              aria-label="Search NGOs"
               placeholder="Search NGOs..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1); // Reset to first page
-              }}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
           {/* Category Filter */}
           <select
+            aria-label="Filter by category"
             value={category}
             onChange={(e) => {
               setCategory(e.target.value);
@@ -104,6 +124,7 @@ export function MyFollows({
 
           {/* Sort */}
           <select
+            aria-label="Sort follows"
             value={sortBy}
             onChange={(e) =>
               setSortBy(e.target.value as 'followedAt' | 'name' | 'impactScore')
