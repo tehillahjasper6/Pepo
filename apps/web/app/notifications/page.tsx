@@ -16,7 +16,7 @@ export default function NotificationsPage() {
             <div className="text-center py-20">
               <PepoBee emotion="idle" size={200} />
               <h2 className="text-2xl font-semibold mt-8 text-gray-900">
-                You're all caught up!
+                You&#39;re all caught up!
               </h2>
               <p className="text-gray-600 mt-2">
                 No new notifications at the moment.
@@ -25,7 +25,7 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {notifications.map((notification: any) => (
+            {notifications.map((notification: { id: string; [key: string]: unknown }) => (
               <NotificationCard key={notification.id} notification={notification} />
             ))}
           </div>
@@ -35,7 +35,7 @@ export default function NotificationsPage() {
   );
 }
 
-function NotificationCard({ notification }: any) {
+function NotificationCard({ notification }: { notification: { id: string; [key: string]: unknown } }) {
   return (
     <div className="card hover:shadow-lg transition-shadow cursor-pointer">
       <div className="flex items-start space-x-4">

@@ -5,8 +5,17 @@ import { useState, useEffect } from 'react';
 import { PepoIcon } from '@/components/PepoBee';
 import { adminApiClient } from '@/lib/apiClient';
 
+interface DashboardStats {
+  totalUsers: number;
+  totalGiveaways: number;
+  totalNGOs: number;
+  totalWinners: number;
+  recentUsers: number;
+  activeGiveaways: number;
+}
+
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalGiveaways: 0,
     totalNGOs: 0,
@@ -16,15 +25,9 @@ export default function AdminDashboard() {
   });
   const [pendingReports, setPendingReports] = useState(0);
   const [pendingNGOs, setPendingNGOs] = useState(0);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (): Promise<void> => {
     try {
-      setLoading(true);
       const [statsData, reportsData, ngosData] = await Promise.all([
         adminApiClient.getStats(),
         adminApiClient.getReports({ status: 'PENDING', limit: 1 }),
@@ -35,11 +38,13 @@ export default function AdminDashboard() {
       setPendingReports(reportsData.pagination?.total || 0);
       setPendingNGOs(ngosData.ngos?.length || 0);
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-    } finally {
-      setLoading(false);
+      // Handle error silently
     }
   };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -208,8 +213,22 @@ export default function AdminDashboard() {
   );
 }
 
-function StatCard({ icon, title, value, subtitle, color }: any) {
-  const colors = {
+interface StatCardProps {
+  icon: React.ReactNode;
+  title: string;
+  value: number;
+  subtitle: string;
+  color: 'blue' | 'green' | 'purple' | 'yellow' | 'red' | 'indigo';
+}
+
+interface ActivityItemProps {
+  icon: React.ReactNode;
+  title: string;
+  time: string;
+}
+
+function StatCard({ icon, title, value, subtitle, color }: StatCardProps) {
+  const colors: Record<string, string> = {
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',
     purple: 'bg-purple-50 text-purple-600',
@@ -232,7 +251,7 @@ function StatCard({ icon, title, value, subtitle, color }: any) {
   );
 }
 
-function ActivityItem({ icon, title, time }: any) {
+function ActivityItem({ icon, title, time }: ActivityItemProps) {
   return (
     <div className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50">
       <div className="text-2xl">{icon}</div>

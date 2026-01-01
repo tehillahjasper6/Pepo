@@ -5,7 +5,6 @@ import { PepoBee } from '@/components/PepoBee';
 
 export default function MessagesPage() {
   const [conversations] = useState([]);
-  const [selectedConversation, setSelectedConversation] = useState(null);
 
   return (
     <div className="min-h-screen bg-background-default">
@@ -21,7 +20,7 @@ export default function MessagesPage() {
               </h2>
               <p className="text-gray-600 mt-2 max-w-md mx-auto">
                 When you express interest in a giveaway or someone expresses interest in yours, 
-                you'll be able to chat here.
+                you&#39;ll be able to chat here.
               </p>
               <a href="/browse" className="btn btn-primary mt-6">
                 Browse Giveaways

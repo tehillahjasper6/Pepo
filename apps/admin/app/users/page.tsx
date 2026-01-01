@@ -5,20 +5,29 @@ import { useState, useEffect } from 'react';
 import { PepoIcon } from '@/components/PepoBee';
 import { adminApiClient } from '@/lib/apiClient';
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  [key: string]: unknown;
+}
+
 export default function UsersPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<any>({});
+  const [pagination, setPagination] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
     fetchUsers();
   }, [page, search, roleFilter, statusFilter]);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (): Promise<void> => {
     try {
       setLoading(true);
       const response = await adminApiClient.getUsers({
@@ -30,19 +39,16 @@ export default function UsersPage() {
       });
       setUsers(response.users || []);
       setPagination(response.pagination || {});
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (userId: string, newStatus: 'ACTIVE' | 'INACTIVE' | 'BANNED') => {
+  const handleStatusChange = async (userId: string, newStatus: 'ACTIVE' | 'INACTIVE' | 'BANNED'): Promise<void> => {
     try {
       await adminApiClient.updateUserStatus(userId, newStatus);
-      fetchUsers(); // Refresh list
+      await fetchUsers(); // Refresh list
     } catch (error) {
-      console.error('Failed to update user status:', error);
       alert('Failed to update user status');
     }
   };
@@ -197,7 +203,7 @@ export default function UsersPage() {
                         <td className="px-4 py-3">
                           <select
                             value={user.status}
-                            onChange={(e) => handleStatusChange(user.id, e.target.value as any)}
+                            onChange={(e) => handleStatusChange(user.id, e.target.value as 'ACTIVE' | 'INACTIVE' | 'BANNED')}
                             className="text-sm border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           >
                             <option value="ACTIVE">Active</option>

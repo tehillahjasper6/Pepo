@@ -20,9 +20,9 @@ interface NGOProfile {
   website?: string;
   totalItemsDistributed: number;
   totalBeneficiariesImpacted: number;
-  activeCampaigns: any[];
-  pastCampaigns: any[];
-  transparencyReports: any[];
+  activeCampaigns: Array<{ id: string; [key: string]: unknown }>;
+  pastCampaigns: Array<{ id: string; [key: string]: unknown }>;
+  transparencyReports: Array<{ id: string; [key: string]: unknown }>;
   confidenceScore: {
     score: number;
     level: 'EMERGING' | 'TRUSTED' | 'HIGHLY_TRUSTED';
@@ -48,8 +48,9 @@ export default function NGOPublicProfilePage() {
       setError(null);
       const data = await apiClient.get(`/ngo/trust/profile/${ngoId}`);
       setProfile(data);
-    } catch (err: any) {
-      setError(err.message || 'Failed to load NGO profile');
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load NGO profile';
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

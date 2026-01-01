@@ -199,12 +199,13 @@ export default function NGORegisterPage() {
       });
 
       // Call NGO registration API
-      const response = await apiClient.registerNGO(formDataToSend);
+      await apiClient.registerNGO(formDataToSend);
 
       toast.success('Application submitted successfully! Your application is under review.');
       router.push('/ngo/status');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to submit application');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to submit application';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -305,7 +306,7 @@ export default function NGORegisterPage() {
         {/* Info Box */}
         <div className="mt-6 p-4 bg-blue-50 rounded-xl">
           <p className="text-sm text-gray-700">
-            <strong>Note:</strong> Your application will be reviewed by our team. You'll receive
+            <strong>Note:</strong> Your application will be reviewed by our team. You&#39;ll receive
             a notification once your organization is verified. This process typically takes 2-3
             business days.
           </p>
@@ -770,7 +771,7 @@ function FileUpload({
       {file && (
         <button
           type="button"
-          onClick={() => handleFileChange({ target: { files: null } } as any, field)}
+          onClick={() => handleFileChange({ target: { files: null } } as unknown as React.ChangeEvent<HTMLInputElement>, field)}
           className="text-sm text-red-600 mt-2"
         >
           Remove file

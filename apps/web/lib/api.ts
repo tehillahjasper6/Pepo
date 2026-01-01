@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { FilterParams } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -22,19 +23,19 @@ api.interceptors.request.use((config) => {
 export const authApi = {
   sendOTP: (email: string) => api.post('/auth/send-otp', { email }),
   verifyOTP: (email: string, code: string) => api.post('/auth/verify-otp', { email, code }),
-  register: (data: any) => api.post('/auth/register', data),
+  register: (data: Record<string, unknown>) => api.post('/auth/register', data),
   login: (email: string, password: string) => api.post('/auth/login', { email, password }),
   getCurrentUser: () => api.get('/auth/me'),
 };
 
 // Giveaways API
 export const giveawaysApi = {
-  getAll: (filters?: any) => api.get('/giveaways', { params: filters }),
+  getAll: (filters?: FilterParams) => api.get('/giveaways', { params: filters }),
   getById: (id: string) => api.get(`/giveaways/${id}`),
   create: (formData: FormData) => api.post('/giveaways', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),
-  update: (id: string, data: any) => api.put(`/giveaways/${id}`, data),
+  update: (id: string, data: Record<string, unknown>) => api.put(`/giveaways/${id}`, data),
   delete: (id: string) => api.delete(`/giveaways/${id}`),
   expressInterest: (id: string) => api.post(`/giveaways/${id}/interest`),
   withdrawInterest: (id: string) => api.delete(`/giveaways/${id}/interest`),
@@ -49,7 +50,7 @@ export const drawApi = {
 // Users API
 export const usersApi = {
   getProfile: () => api.get('/users/me'),
-  updateProfile: (data: any) => api.put('/users/me', data),
+  updateProfile: (data: Record<string, unknown>) => api.put('/users/me', data),
   getStats: () => api.get('/users/me/stats'),
   getGiveaways: () => api.get('/users/me/giveaways'),
   getParticipations: () => api.get('/users/me/participations'),
@@ -74,10 +75,10 @@ export const notificationsApi = {
 
 // NGO API
 export const ngoApi = {
-  apply: (data: any) => api.post('/ngo/apply', data),
+  apply: (data: Record<string, unknown>) => api.post('/ngo/apply', data),
   getProfile: () => api.get('/ngo/profile'),
   getVerified: () => api.get('/ngo/verified'),
-  createCampaign: (data: any) => api.post('/ngo/campaigns', data),
+  createCampaign: (data: Record<string, unknown>) => api.post('/ngo/campaigns', data),
   getCampaigns: () => api.get('/ngo/campaigns'),
   getDashboard: () => api.get('/ngo/dashboard'),
 };
@@ -85,7 +86,7 @@ export const ngoApi = {
 // Admin API
 export const adminApi = {
   getStats: () => api.get('/admin/stats'),
-  getUsers: (filters?: any) => api.get('/admin/users', { params: filters }),
+  getUsers: (filters?: FilterParams) => api.get('/admin/users', { params: filters }),
   updateUserStatus: (userId: string, isActive: boolean) =>
     api.put(`/admin/users/${userId}/status`, { isActive }),
   getPendingNGOs: () => api.get('/admin/ngo/pending'),
@@ -95,7 +96,7 @@ export const adminApi = {
   getReports: (status?: string) => api.get('/admin/reports', { params: { status } }),
   resolveReport: (reportId: string, resolution: string) =>
     api.post(`/admin/reports/${reportId}/resolve`, { resolution }),
-  getAuditLogs: (filters?: any) => api.get('/admin/audit-logs', { params: filters }),
+  getAuditLogs: (filters?: FilterParams) => api.get('/admin/audit-logs', { params: filters }),
 };
 
 

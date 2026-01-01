@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { apiClient } from '@/lib/apiClient';
 import { toast } from '@/components/Toast';
-import { PepoBee } from '@/components/PepoBee';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export default function EditProfilePage() {
@@ -51,8 +50,9 @@ export default function EditProfilePage() {
       await fetchUser(); // Refresh user data
       toast.success('Profile updated successfully! 🎉');
       router.push('/profile');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update profile');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to update profile';
+      toast.error(errorMsg);
     } finally {
       setSaving(false);
     }
@@ -86,7 +86,7 @@ export default function EditProfilePage() {
         setFormData({ ...formData, avatar: reader.result as string });
       };
       reader.readAsDataURL(file);
-    } catch (error: any) {
+    } catch (error: unknown) {
       toast.error('Failed to upload image');
     }
   };

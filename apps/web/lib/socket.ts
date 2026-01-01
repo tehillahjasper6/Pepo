@@ -54,7 +54,7 @@ class SocketClient {
   /**
    * Join a giveaway room
    */
-  joinGiveaway(giveawayId: string, callback?: (response: any) => void) {
+  joinGiveaway(giveawayId: string, callback?: (response: { [key: string]: unknown }) => void) {
     if (!this.socket) return;
     this.socket.emit('join-giveaway', { giveawayId }, callback);
   }
@@ -62,7 +62,7 @@ class SocketClient {
   /**
    * Leave a giveaway room
    */
-  leaveGiveaway(giveawayId: string, callback?: (response: any) => void) {
+  leaveGiveaway(giveawayId: string, callback?: (response: { [key: string]: unknown }) => void) {
     if (!this.socket) return;
     this.socket.emit('leave-giveaway', { giveawayId }, callback);
   }
@@ -70,7 +70,7 @@ class SocketClient {
   /**
    * Send a message
    */
-  sendMessage(giveawayId: string, content: string, callback?: (response: any) => void) {
+  sendMessage(giveawayId: string, content: string, callback?: (response: { [key: string]: unknown }) => void) {
     if (!this.socket) return;
     this.socket.emit('send-message', { giveawayId, content }, callback);
   }
@@ -78,7 +78,7 @@ class SocketClient {
   /**
    * Listen for new messages
    */
-  onMessage(callback: (message: any) => void) {
+  onMessage(callback: (message: { [key: string]: unknown }) => void) {
     if (!this.socket) return;
     this.socket.on('new-message', callback);
   }
@@ -86,7 +86,7 @@ class SocketClient {
   /**
    * Remove message listener
    */
-  offMessage(callback?: (message: any) => void) {
+  offMessage(callback?: (message: { [key: string]: unknown }) => void) {
     if (!this.socket) return;
     if (callback) {
       this.socket.off('new-message', callback);

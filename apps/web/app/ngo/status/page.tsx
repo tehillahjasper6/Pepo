@@ -7,8 +7,8 @@ import { PepoBee } from '@/components/PepoBee';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export default function NGOStatusPage() {
-  const { user, isAuthenticated } = useAuth();
-  const [ngoProfile, setNgoProfile] = useState<any>(null);
+  const { isAuthenticated } = useAuth();
+  const [ngoProfile, setNgoProfile] = useState<{ id: string; [key: string]: unknown } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,8 +21,8 @@ export default function NGOStatusPage() {
     try {
       const profile = await apiClient.getNGOProfile();
       setNgoProfile(profile);
-    } catch (error) {
-      console.error('Failed to fetch NGO profile:', error);
+    } catch (error: unknown) {
+      // Failed to fetch NGO profile
     } finally {
       setLoading(false);
     }
@@ -44,7 +44,7 @@ export default function NGOStatusPage() {
             <PepoBee emotion="idle" size={150} />
             <h1 className="text-2xl font-bold mt-6 mb-4">No NGO Application Found</h1>
             <p className="text-gray-600 mb-6">
-              You haven't applied for NGO status yet. Start your application to get verified.
+              You haven&#39;t applied for NGO status yet. Start your application to get verified.
             </p>
             <a href="/ngo/register" className="btn btn-primary">
               Apply Now
@@ -122,7 +122,7 @@ export default function NGOStatusPage() {
               <p className="text-sm text-gray-700">
                 <strong>What happens next?</strong>
                 <br />
-                Our team will review your application and documents. You'll receive a notification
+                Our team will review your application and documents. You&#39;ll receive a notification
                 once the review is complete.
               </p>
             </div>

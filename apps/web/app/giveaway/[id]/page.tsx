@@ -8,6 +8,8 @@ import { useGiveaways } from '@/hooks/useGiveaways';
 import { useAuth } from '@/hooks/useAuth';
 import { usePepo } from '@/hooks/usePepo';
 import { toast } from '@/components/Toast';
+import { apiClient } from '@/lib/apiClient';
+import Badge from '@/components/Badge';
 
 export default function GiveawayDetailPage({ params }: { params: { id: string } }) {
   const router = useRouter();
@@ -50,10 +52,11 @@ export default function GiveawayDetailPage({ params }: { params: { id: string } 
       showGiving();
       toast.success('✋ You\'re in the draw! Good luck!');
       setTimeout(() => setShowInterestAnimation(false), 2500);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setShowInterestAnimation(false);
       showAlert();
-      toast.error(error.message || 'Failed to express interest');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to express interest';
+      toast.error(errorMsg);
     }
   };
 
@@ -62,8 +65,9 @@ export default function GiveawayDetailPage({ params }: { params: { id: string } 
       await withdrawInterest(params.id);
       setHasExpressed(false);
       toast.info('Interest withdrawn');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to withdraw interest');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to withdraw interest';
+      toast.error(errorMsg);
     }
   };
 
@@ -84,11 +88,12 @@ export default function GiveawayDetailPage({ params }: { params: { id: string } 
         celebrateWin();
         toast.success('🎉 Winner selected!');
       }, 2000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setShowDraw(false);
-      setDrawError(error.message || 'Failed to conduct draw');
+      const errorMsg = error instanceof Error ? error.message : 'Failed to conduct draw';
+      setDrawError(errorMsg);
       showAlert();
-      toast.error(error.message || 'Failed to conduct draw');
+      toast.error(errorMsg);
     }
   };
 
@@ -106,9 +111,6 @@ export default function GiveawayDetailPage({ params }: { params: { id: string } 
 
   const giveaway = currentGiveaway;
   const isCreator = user?.id === giveaway.creator?.id;
-  const timeUntilEnd = giveaway.endsAt 
-    ? Math.ceil((new Date(giveaway.endsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-    : 0;
 
   return (
     <div className="min-h-screen bg-background-default">
@@ -240,6 +242,10 @@ export default function GiveawayDetailPage({ params }: { params: { id: string } 
                   <div className="text-sm text-gray-600">{giveaway.creator?.city || giveaway.location}</div>
                 </div>
               </div>
+              <div className="mt-3 flex gap-2">
+                {/* Creator badges (client-side) */}
+                <CreatorBadges creatorId={giveaway.creator?.id} />
+              </div>
             </div>
 
             {/* Actions */}
@@ -266,10 +272,10 @@ export default function GiveawayDetailPage({ params }: { params: { id: string } 
                       <PepoBee emotion="idle" size={60} />
                     </div>
                     <p className="font-semibold text-secondary-700">
-                      You're in the draw!
+                      You&#39;re in the draw!
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
-                      Good luck! You'll be notified if selected.
+                      Good luck! You&#39;ll be notified if selected.
                     </p>
                   </div>
                   <button
@@ -333,6 +339,33 @@ export default function GiveawayDetailPage({ params }: { params: { id: string } 
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+function CreatorBadges({ creatorId }: { creatorId: string }) {
+  const [badges, setBadges] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!creatorId) return;
+      try {
+        const res = await apiClient.get(`/badges/user/${creatorId}`);
+        if (mounted) setBadges(res || []);
+      } catch (e) {
+        // Silently fail if badges can't be loaded
+      }
+    })();
+    return () => { mounted = false; };
+  }, [creatorId]);
+
+  if (!badges || badges.length === 0) return null;
+
+  return (
+    <div className="flex gap-2 flex-wrap">
+      {badges.map((b) => (
+        <Badge key={b.id} badge={b} />
+      ))}
     </div>
   );
 }

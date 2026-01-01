@@ -5,10 +5,15 @@ import { useState, useEffect } from 'react';
 import { PepoIcon } from '@/components/PepoBee';
 import { adminApiClient } from '@/lib/apiClient';
 
+interface TransparencyReport {
+  id: string;
+  [key: string]: unknown;
+}
+
 export default function TransparencyReportsPage() {
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<TransparencyReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [selectedReport, setSelectedReport] = useState<TransparencyReport | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState(false);
@@ -17,19 +22,17 @@ export default function TransparencyReportsPage() {
     fetchReports();
   }, []);
 
-  const fetchReports = async () => {
+  const fetchReports = async (): Promise<void> => {
     try {
       setLoading(true);
       const data = await adminApiClient.getPendingTransparencyReports();
       setReports(data.reports || []);
-    } catch (error) {
-      console.error('Failed to fetch reports:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReview = async (reportId: string, action: 'APPROVE' | 'REJECT') => {
+  const handleReview = async (reportId: string, action: 'APPROVE' | 'REJECT'): Promise<void> => {
     try {
       setProcessing(true);
       await adminApiClient.reviewTransparencyReport(
@@ -42,9 +45,8 @@ export default function TransparencyReportsPage() {
       setSelectedReport(null);
       setReviewNotes('');
       setRejectionReason('');
-      fetchReports();
+      await fetchReports();
     } catch (error) {
-      console.error('Failed to review report:', error);
       alert('Failed to review report');
     } finally {
       setProcessing(false);
@@ -253,7 +255,7 @@ export default function TransparencyReportsPage() {
                 <div>
                   <h4 className="font-semibold mb-2">Success Stories</h4>
                   <div className="space-y-3">
-                    {selectedReport.successStories.map((story: any, i: number) => (
+                    {selectedReport.successStories?.map((story: Record<string, unknown>, i: number) => (
                       <div key={i} className="border rounded p-3">
                         <h5 className="font-medium">{story.title}</h5>
                         <p className="text-sm text-gray-600 mt-1">{story.description}</p>

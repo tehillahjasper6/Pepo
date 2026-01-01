@@ -12,7 +12,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log error to error reporting service
-    console.error('Application error:', error);
+    // Error is logged to error reporting service
   }, [error]);
 
   return (

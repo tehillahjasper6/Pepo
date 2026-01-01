@@ -117,8 +117,9 @@ export default function TransparencyReportPage() {
           router.push('/ngo/dashboard');
         }, 2000);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to submit report');
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to submit report';
+      setError(errorMsg);
     } finally {
       setLoading(false);
       setSaving(false);

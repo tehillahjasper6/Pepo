@@ -9,6 +9,43 @@ interface RequestOptions extends RequestInit {
   token?: string;
 }
 
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status: string;
+  createdAt?: string;
+  [key: string]: unknown;
+}
+
+interface NGOApplication {
+  id: string;
+  ngoProfileId: string;
+  organizationName: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+interface Report {
+  id: string;
+  type: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+interface AuditLog {
+  id: string;
+  entityType: string;
+  action: string;
+  [key: string]: unknown;
+}
+
+interface TransparencyReport {
+  id: string;
+  [key: string]: unknown;
+}
+
 class AdminApiClient {
   private baseUrl: string;
 
@@ -46,34 +83,29 @@ class AdminApiClient {
 
     const url = `${this.baseUrl}${endpoint}`;
 
-    try {
-      const response = await fetch(url, {
-        ...fetchOptions,
-        headers,
-      });
+    const response = await fetch(url, {
+      ...fetchOptions,
+      headers,
+    });
 
-      if (response.status === 401) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
-        throw new Error('Unauthorized. Please log in again.');
+    if (response.status === 401) {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
       }
-
-      if (response.status === 403) {
-        throw new Error('You do not have permission to perform this action.');
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'An error occurred');
-      }
-
-      return data;
-    } catch (error: any) {
-      console.error('API Request Error:', error);
-      throw error;
+      throw new Error('Unauthorized. Please log in again.');
     }
+
+    if (response.status === 403) {
+      throw new Error('You do not have permission to perform this action.');
+    }
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'An error occurred');
+    }
+
+    return data;
   }
 
   async get<T>(endpoint: string, options?: RequestOptions): Promise<T> {
@@ -82,7 +114,7 @@ class AdminApiClient {
 
   async post<T>(
     endpoint: string,
-    body?: any,
+    body?: Record<string, unknown>,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -94,7 +126,7 @@ class AdminApiClient {
 
   async put<T>(
     endpoint: string,
-    body?: any,
+    body?: Record<string, unknown>,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -133,8 +165,8 @@ class AdminApiClient {
     search?: string;
     role?: string;
     status?: string;
-  }) {
-    const queryParams: any = {};
+  }): Promise<{ users: User[]; pagination: Record<string, unknown> }> {
+    const queryParams: Record<string, string> = {};
     if (params?.page) queryParams.page = params.page.toString();
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.search) queryParams.search = params.search;
@@ -142,7 +174,7 @@ class AdminApiClient {
     if (params?.status) queryParams.status = params.status;
 
     const queryString = new URLSearchParams(queryParams).toString();
-    return this.get<{ users: any[]; pagination: any }>(
+    return this.get<{ users: User[]; pagination: Record<string, unknown> }>(
       `/admin/users${queryString ? `?${queryString}` : ''}`
     );
   }
@@ -157,8 +189,8 @@ class AdminApiClient {
   /**
    * Get pending NGO applications
    */
-  async getPendingNGOs() {
-    return this.get<{ ngos: any[] }>('/admin/ngo/pending');
+  async getPendingNGOs(): Promise<{ ngos: NGOApplication[] }> {
+    return this.get<{ ngos: NGOApplication[] }>('/admin/ngo/pending');
   }
 
   /**
@@ -182,14 +214,14 @@ class AdminApiClient {
     page?: number;
     limit?: number;
     status?: 'PENDING' | 'RESOLVED' | 'DISMISSED';
-  }) {
-    const queryParams: any = {};
+  }): Promise<{ reports: Report[]; pagination: Record<string, unknown> }> {
+    const queryParams: Record<string, string> = {};
     if (params?.page) queryParams.page = params.page.toString();
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.status) queryParams.status = params.status;
 
     const queryString = new URLSearchParams(queryParams).toString();
-    return this.get<{ reports: any[]; pagination: any }>(
+    return this.get<{ reports: Report[]; pagination: Record<string, unknown> }>(
       `/admin/reports${queryString ? `?${queryString}` : ''}`
     );
   }
@@ -211,8 +243,8 @@ class AdminApiClient {
     action?: string;
     startDate?: string;
     endDate?: string;
-  }) {
-    const queryParams: any = {};
+  }): Promise<{ logs: AuditLog[]; pagination: Record<string, unknown> }> {
+    const queryParams: Record<string, string> = {};
     if (params?.page) queryParams.page = params.page.toString();
     if (params?.limit) queryParams.limit = params.limit.toString();
     if (params?.entityType) queryParams.entityType = params.entityType;
@@ -221,7 +253,7 @@ class AdminApiClient {
     if (params?.endDate) queryParams.endDate = params.endDate;
 
     const queryString = new URLSearchParams(queryParams).toString();
-    return this.get<{ logs: any[]; pagination: any }>(
+    return this.get<{ logs: AuditLog[]; pagination: Record<string, unknown> }>(
       `/admin/audit-logs${queryString ? `?${queryString}` : ''}`
     );
   }
@@ -229,8 +261,8 @@ class AdminApiClient {
   /**
    * Get pending transparency reports
    */
-  async getPendingTransparencyReports() {
-    return this.get<{ reports: any[] }>('/admin/transparency-reports/pending');
+  async getPendingTransparencyReports(): Promise<{ reports: TransparencyReport[] }> {
+    return this.get<{ reports: TransparencyReport[] }>('/admin/transparency-reports/pending');
   }
 
   /**

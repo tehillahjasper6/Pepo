@@ -39,8 +39,9 @@ export default function LoginPage() {
       await apiClient.sendOTP(otpType === 'email' ? email : undefined, otpType === 'phone' ? phone : undefined);
       setOtpSent(true);
       toast.success(`OTP sent to your ${otpType === 'email' ? 'email' : 'phone number'}`);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send OTP');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to send OTP';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ export default function LoginPage() {
         return;
       }
 
-      const response = await apiClient.verifyOTP(
+      await apiClient.verifyOTP(
         otpType === 'email' ? email : undefined,
         otpType === 'phone' ? phone : undefined,
         otp
@@ -65,8 +66,9 @@ export default function LoginPage() {
       
       toast.success('Welcome back to PEPO! 🐝');
       router.push('/browse');
-    } catch (error: any) {
-      toast.error(error.message || 'Invalid OTP code');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Invalid OTP code';
+      toast.error(errorMsg);
       setLoading(false);
     }
   };
@@ -86,8 +88,9 @@ export default function LoginPage() {
       await login(identifier, password);
       toast.success('Welcome back to PEPO! 🐝');
       router.push('/browse');
-    } catch (error: any) {
-      toast.error(error.message || 'Login failed. Please check your credentials.');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
+      toast.error(errorMsg);
       setLoading(false);
     }
   };
@@ -248,8 +251,9 @@ export default function LoginPage() {
                       otpType === 'phone' ? phone : undefined
                     );
                     toast.success(`OTP resent to your ${otpType === 'email' ? 'email' : 'phone number'}`);
-                  } catch (error: any) {
-                    toast.error(error.message || 'Failed to resend OTP');
+                  } catch (error: unknown) {
+                    const errorMsg = error instanceof Error ? error.message : 'Failed to resend OTP';
+                    toast.error(errorMsg);
                   } finally {
                     setLoading(false);
                   }
@@ -340,7 +344,7 @@ export default function LoginPage() {
 
           {/* Sign Up Link */}
           <p className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
+            Don&#39;t have an account?{' '}
             <Link href="/signup" className="font-medium text-primary-600 hover:text-primary-700">
               Sign up
             </Link>

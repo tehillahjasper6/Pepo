@@ -1,14 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { apiClient } from '@/lib/apiClient';
+import { adminApiClient } from '@/lib/apiClient';
 import { PepoBee } from '@/components/PepoBee';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { toast } from '@/components/Toast';
 
+interface NGOApplication {
+  id: string;
+  ngoProfileId: string;
+  organizationName: string;
+  status: string;
+  documents: Document[];
+  reviews?: ReviewRecord[];
+  [key: string]: unknown;
+}
+
+interface Document {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  documentType: string;
+}
+
+interface ReviewRecord {
+  id: string;
+  [key: string]: unknown;
+}
+
 export default function NGOReviewPage() {
-  const [applications, setApplications] = useState<any[]>([]);
-  const [selectedApp, setSelectedApp] = useState<any>(null);
+  const [applications, setApplications] = useState<NGOApplication[]>([]);
+  const [selectedApp, setSelectedApp] = useState<NGOApplication | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
@@ -18,46 +40,45 @@ export default function NGOReviewPage() {
     fetchPendingApplications();
   }, []);
 
-  const fetchPendingApplications = async () => {
+  const fetchPendingApplications = async (): Promise<void> => {
     try {
       setLoading(true);
-      const data = await apiClient.getPendingNGOs();
+      const data = await adminApiClient.getPendingNGOs();
       setApplications(data);
-    } catch (error: any) {
-      toast.error('Failed to load applications');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchApplicationDetails = async (ngoProfileId: string) => {
+  const fetchApplicationDetails = async (ngoProfileId: string): Promise<void> => {
     try {
-      const details = await apiClient.getNGOApplication(ngoProfileId);
+      const details = await adminApiClient.getNGOApplication(ngoProfileId);
       setSelectedApp(details);
-    } catch (error: any) {
+    } catch (error) {
       toast.error('Failed to load application details');
     }
   };
 
-  const handleApprove = async (ngoProfileId: string) => {
+  const handleApprove = async (ngoProfileId: string): Promise<void> => {
     if (!confirm('Are you sure you want to approve this NGO?')) {
       return;
     }
 
     try {
       setActionLoading(true);
-      await apiClient.verifyNGO(ngoProfileId);
+      await adminApiClient.verifyNGO(ngoProfileId);
       toast.success('NGO approved successfully!');
-      fetchPendingApplications();
+      await fetchPendingApplications();
       setSelectedApp(null);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to approve NGO');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to approve NGO';
+      toast.error(message);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleReject = async (ngoProfileId: string) => {
+  const handleReject = async (ngoProfileId: string): Promise<void> => {
     if (!rejectReason.trim()) {
       toast.error('Please provide a rejection reason');
       return;
@@ -69,19 +90,20 @@ export default function NGOReviewPage() {
 
     try {
       setActionLoading(true);
-      await apiClient.rejectNGO(ngoProfileId, rejectReason);
+      await adminApiClient.rejectNGO(ngoProfileId, rejectReason);
       toast.success('Application rejected');
-      fetchPendingApplications();
+      await fetchPendingApplications();
       setSelectedApp(null);
       setRejectReason('');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to reject application');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to reject application';
+      toast.error(message);
     } finally {
       setActionLoading(false);
     }
   };
 
-  const handleRequestInfo = async (ngoProfileId: string) => {
+  const handleRequestInfo = async (ngoProfileId: string): Promise<void> => {
     if (!requestInfo.trim()) {
       toast.error('Please specify what information is needed');
       return;
@@ -89,11 +111,12 @@ export default function NGOReviewPage() {
 
     try {
       setActionLoading(true);
-      await apiClient.requestNGOInfo(ngoProfileId, requestInfo);
+      await adminApiClient.requestNGOInfo(ngoProfileId, requestInfo);
       toast.success('Information request sent');
       setRequestInfo('');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send request');
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to send request';
+      toast.error(message);
     } finally {
       setActionLoading(false);
     }
@@ -241,7 +264,7 @@ export default function NGOReviewPage() {
                   <div>
                     <h3 className="font-semibold mb-3">Documents</h3>
                     <div className="space-y-2">
-                      {selectedApp.documents.map((doc: any) => (
+                      {selectedApp.documents?.map((doc: Document) => (
                         <a
                           key={doc.id}
                           href={doc.fileUrl}
@@ -265,7 +288,7 @@ export default function NGOReviewPage() {
                   <div>
                     <h3 className="font-semibold mb-3">Review History</h3>
                     <div className="space-y-2">
-                      {selectedApp.reviews.map((review: any) => (
+                      {selectedApp.reviews?.map((review: ReviewRecord) => (
                         <div key={review.id} className="p-3 bg-gray-50 rounded-lg">
                           <div className="flex justify-between items-start">
                             <div>

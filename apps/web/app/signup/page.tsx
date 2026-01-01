@@ -46,8 +46,9 @@ export default function SignupPage() {
       setTimeout(() => {
         router.push('/browse');
       }, 2000);
-    } catch (error: any) {
-      toast.error(error.message || 'Registration failed. Please try again.');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Registration failed. Please try again.';
+      toast.error(errorMsg);
       setLoading(false);
     }
   };

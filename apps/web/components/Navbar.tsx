@@ -84,7 +84,7 @@ export default function Navbar() {
 }
 
 
-function NavLink({ href, active, children }: any) {
+function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
   return (
     <Link
       href={href}
@@ -99,7 +99,7 @@ function NavLink({ href, active, children }: any) {
   );
 }
 
-function MobileNavLink({ href, active, icon, children }: any) {
+function MobileNavLink({ href, active, icon, children }: { href: string; active: boolean; icon: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}

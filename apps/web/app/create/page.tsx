@@ -72,9 +72,9 @@ export default function CreateGiveawayPage() {
       setTimeout(() => {
         router.push('/browse');
       }, 2500);
-    } catch (error: any) {
-      console.error('Create giveaway error:', error);
-      toast.error(error.message || 'Failed to create giveaway. Please try again.');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to create giveaway. Please try again.';
+      toast.error(errorMsg);
       setSubmitting(false);
     }
   };

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { GiveawayCard } from '@/components/GiveawayCard';
 import { PepoBee } from '@/components/PepoBee';
 import { useGiveaways } from '@/hooks/useGiveaways';
@@ -23,7 +23,7 @@ export default function BrowsePage() {
 
   useEffect(() => {
     // Fetch giveaways on mount and when filter/search changes
-    const filterParams: any = {};
+    const filterParams: Record<string, string> = {};
     if (filter !== 'all') {
       filterParams.category = filter;
     }
@@ -156,7 +156,7 @@ export default function BrowsePage() {
         ) : (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {giveaways.map((giveaway: any) => (
+              {giveaways.map((giveaway: { id: string; [key: string]: unknown }) => (
                 <GiveawayCard key={giveaway.id} giveaway={giveaway} />
               ))}
             </div>
@@ -232,7 +232,7 @@ export default function BrowsePage() {
   );
 }
 
-function FilterButton({ active, onClick, children }: any) {
+function FilterButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       onClick={onClick}

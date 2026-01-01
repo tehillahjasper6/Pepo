@@ -4,19 +4,21 @@
 interface Column {
   key: string;
   label: string;
-  render?: (value: any, row: any) => React.ReactNode;
+  render?: (value: unknown, row: Record<string, unknown>) => React.ReactNode;
   width?: string;
+}
+
+interface PaginationProps {
+  page: number;
+  limit: number;
+  total: number;
 }
 
 interface DataTableProps {
   columns: Column[];
-  data: any[];
+  data: Record<string, unknown>[];
   loading?: boolean;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-  };
+  pagination?: PaginationProps;
   onPageChange?: (page: number) => void;
   emptyMessage?: string;
 }

@@ -14,7 +14,7 @@ export default function MessagesPage({ params }: { params: { giveawayId: string 
   const router = useRouter();
   const { user } = useAuth();
   const { isConnected, messages, sendMessage, error: socketError } = useSocket(params.giveawayId);
-  const [giveaway, setGiveaway] = useState<any>(null);
+  const [giveaway, setGiveaway] = useState<{ id: string; [key: string]: unknown } | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [messageInput, setMessageInput] = useState('');
@@ -26,7 +26,7 @@ export default function MessagesPage({ params }: { params: { giveawayId: string 
       try {
         const response = await apiClient.getGiveaway(params.giveawayId);
         setGiveaway(response.giveaway);
-      } catch (error: any) {
+      } catch (error: unknown) {
         toast.error('Failed to load giveaway');
       } finally {
         setLoading(false);
@@ -40,10 +40,10 @@ export default function MessagesPage({ params }: { params: { giveawayId: string 
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const response = await apiClient.getMessages(params.giveawayId);
+        await apiClient.getMessages(params.giveawayId);
         // Messages will be added via WebSocket
-      } catch (error: any) {
-        console.error('Failed to fetch messages:', error);
+      } catch (error: unknown) {
+        // Silently fail if messages can't be fetched
       }
     };
 
@@ -69,8 +69,8 @@ export default function MessagesPage({ params }: { params: { giveawayId: string 
     try {
       await sendMessage(content);
       // Message will be added via WebSocket
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to send message');
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to send message';\n      toast.error(errorMsg);
       setMessageInput(content); // Restore message
     } finally {
       setSending(false);

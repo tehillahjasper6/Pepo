@@ -5,8 +5,25 @@ import { useState, useEffect } from 'react';
 import { PepoIcon } from '@/components/PepoBee';
 import { adminApiClient } from '@/lib/apiClient';
 
+interface AuditLog {
+  id: string;
+  entityType: string;
+  entityId: string;
+  action: string;
+  userId: string;
+  timestamp: string;
+  details?: Record<string, unknown>;
+}
+
+interface PaginationInfo {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 export default function AuditLogsPage() {
-  const [logs, setLogs] = useState<any[]>([]);
+  const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     entityType: '',
@@ -15,13 +32,9 @@ export default function AuditLogsPage() {
     endDate: '',
   });
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<any>({});
+  const [pagination, setPagination] = useState<PaginationInfo | Record<string, unknown>>({});
 
-  useEffect(() => {
-    fetchLogs();
-  }, [page, filters]);
-
-  const fetchLogs = async () => {
+  const fetchLogs = async (): Promise<void> => {
     try {
       setLoading(true);
       const response = await adminApiClient.getAuditLogs({
@@ -34,12 +47,14 @@ export default function AuditLogsPage() {
       });
       setLogs(response.logs || []);
       setPagination(response.pagination || {});
-    } catch (error) {
-      console.error('Failed to fetch audit logs:', error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchLogs();
+  }, [page, filters]);
 
   const getActionIcon = (action: string) => {
     if (action.includes('CREATE')) return '➕';

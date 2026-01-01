@@ -1,30 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { PepoBee, PepoIcon } from '@/components/PepoBee';
+import { PepoBee } from '@/components/PepoBee';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
       <header className="bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 text-white">
-        {/* Removed duplicate navbar: Navigation should be handled globally in layout.tsx */}
-          <div className="flex items-center space-x-2">
-            <PepoIcon size={40} />
-            <span className="text-2xl font-bold">PEPO</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Link href="/login" className="hover:underline">
-              Login
-            </Link>
-            <Link href="/signup" className="btn bg-white text-primary-500 hover:bg-gray-100">
-              Get Started
-            </Link>
-          </div>
-        </nav>
 
         <div className="container mx-auto px-4 py-20 text-center">
           <motion.div

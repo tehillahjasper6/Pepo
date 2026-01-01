@@ -5,20 +5,34 @@ import { useState, useEffect } from 'react';
 import { PepoIcon } from '@/components/PepoBee';
 import { adminApiClient } from '@/lib/apiClient';
 
+interface Report {
+  id: string;
+  type: string;
+  status: string;
+  [key: string]: unknown;
+}
+
+interface ReportPagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages?: number;
+}
+
 export default function ReportsPage() {
-  const [reports, setReports] = useState<any[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<'PENDING' | 'RESOLVED' | 'DISMISSED' | 'all'>('PENDING');
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<any>({});
-  const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [pagination, setPagination] = useState<ReportPagination | Record<string, unknown>>({});
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [resolution, setResolution] = useState('');
 
   useEffect(() => {
     fetchReports();
   }, [page, statusFilter]);
 
-  const fetchReports = async () => {
+  const fetchReports = async (): Promise<void> => {
     try {
       setLoading(true);
       const response = await adminApiClient.getReports({
@@ -28,14 +42,12 @@ export default function ReportsPage() {
       });
       setReports(response.reports || []);
       setPagination(response.pagination || {});
-    } catch (error) {
-      console.error('Failed to fetch reports:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResolve = async (reportId: string) => {
+  const handleResolve = async (reportId: string): Promise<void> => {
     if (!resolution.trim()) {
       alert('Please provide a resolution reason');
       return;
@@ -45,9 +57,8 @@ export default function ReportsPage() {
       await adminApiClient.resolveReport(reportId, resolution);
       setSelectedReport(null);
       setResolution('');
-      fetchReports();
+      await fetchReports();
     } catch (error) {
-      console.error('Failed to resolve report:', error);
       alert('Failed to resolve report');
     }
   };
@@ -111,7 +122,7 @@ export default function ReportsPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => {
-                  setStatusFilter(e.target.value as any);
+                  setStatusFilter(e.target.value as 'PENDING' | 'RESOLVED' | 'DISMISSED' | 'all');
                   setPage(1);
                 }}
                 className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"

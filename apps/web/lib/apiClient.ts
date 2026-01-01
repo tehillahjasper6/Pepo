@@ -107,11 +107,11 @@ class ApiClient {
       }
 
       return data;
-    } catch (error: any) {
-      console.error('API Request Error:', error);
+    } catch (error: unknown) {
+      const err = error as Error;
       
       // Handle network errors
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
         throw new Error('Network error. Please check your internet connection.');
       }
       
@@ -137,7 +137,7 @@ class ApiClient {
    */
   async post<T>(
     endpoint: string,
-    body?: any,
+    body?: Record<string, unknown>,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -152,7 +152,7 @@ class ApiClient {
    */
   async put<T>(
     endpoint: string,
-    body?: any,
+    body?: Record<string, unknown>,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -167,7 +167,7 @@ class ApiClient {
    */
   async patch<T>(
     endpoint: string,
-    body?: any,
+    body?: Record<string, unknown>,
     options?: RequestOptions
   ): Promise<T> {
     return this.request<T>(endpoint, {
@@ -197,9 +197,9 @@ class ApiClient {
     city: string;
     gender?: string;
   }) {
-    const response = await this.post<{ user: any; access_token: string }>(
+    const response = await this.post<{ user: Record<string, unknown>; access_token: string }>(
       '/auth/register',
-      data
+      data as Record<string, unknown>
     );
     this.setToken(response.access_token);
     return response;
@@ -209,7 +209,7 @@ class ApiClient {
    * Login with email and password
    */
   async login(email: string, password: string) {
-    const response = await this.post<{ user: any; access_token: string }>(
+    const response = await this.post<{ user: Record<string, unknown>; access_token: string }>(
       '/auth/login',
       { email, password }
     );
@@ -228,14 +228,14 @@ class ApiClient {
    * Get current user
    */
   async getCurrentUser() {
-    return this.get<{ user: any }>('/auth/me');
+    return this.get<{ user: Record<string, unknown> }>('/auth/me');
   }
 
   /**
    * Update user profile
    */
   async updateProfile(data: { name?: string; city?: string; avatar?: string }) {
-    return this.put<{ user: any }>('/users/me', data);
+    return this.put<{ user: Record<string, unknown> }>('/users/me', data);
   }
 
   /**
@@ -249,7 +249,7 @@ class ApiClient {
    * Verify OTP (supports email or phone)
    */
   async verifyOTP(email: string | undefined, phone: string | undefined, otp: string) {
-    const response = await this.post<{ user: any; access_token: string }>(
+    const response = await this.post<{ user: Record<string, unknown>; access_token: string }>(
       '/auth/verify-otp',
       { email, phone, code: otp }
     );
@@ -269,7 +269,7 @@ class ApiClient {
     page?: number;
     limit?: number;
   }) {
-    const queryParams: any = {};
+    const queryParams: Record<string, string> = {};
     if (params?.status) queryParams.status = params.status;
     if (params?.category) queryParams.category = params.category;
     if (params?.search) queryParams.search = params.search;
@@ -277,7 +277,7 @@ class ApiClient {
     if (params?.limit) queryParams.limit = params.limit.toString();
     
     const queryString = new URLSearchParams(queryParams).toString();
-    return this.get<{ giveaways: any[]; pagination: any }>(
+    return this.get<{ giveaways: Record<string, unknown>[]; pagination: Record<string, unknown> }>(
       `/giveaways${queryString ? `?${queryString}` : ''}`
     );
   }
@@ -286,7 +286,7 @@ class ApiClient {
    * Get a single giveaway by ID
    */
   async getGiveaway(id: string) {
-    return this.get<{ giveaway: any }>(`/giveaways/${id}`);
+    return this.get<{ giveaway: Record<string, unknown> }>(`/giveaways/${id}`);
   }
 
   /**
@@ -303,8 +303,8 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create giveaway');
+      const error = await response.json() as Record<string, unknown>;
+      throw new Error((error.message as string) || 'Failed to create giveaway');
     }
 
     return response.json();
@@ -313,7 +313,7 @@ class ApiClient {
   /**
    * Update a giveaway
    */
-  async updateGiveaway(id: string, data: any) {
+  async updateGiveaway(id: string, data: Record<string, unknown>) {
     return this.patch(`/giveaways/${id}`, data);
   }
 
@@ -363,13 +363,13 @@ class ApiClient {
    */
   async getUserProfile(userId?: string) {
     const endpoint = userId ? `/users/${userId}` : '/users/me';
-    return this.get<{ user: any }>(endpoint);
+    return this.get<{ user: Record<string, unknown> }>(endpoint);
   }
 
   /**
    * Update user profile
    */
-  async updateUserProfile(data: any) {
+  async updateUserProfile(data: Record<string, unknown>) {
     return this.patch('/users/me', data);
   }
 
@@ -416,7 +416,7 @@ class ApiClient {
    * Get notifications
    */
   async getNotifications(params?: { page?: number; limit?: number }) {
-    const queryString = new URLSearchParams(params as any).toString();
+    const queryString = new URLSearchParams(params as Record<string, string>).toString();
     return this.get(`/notifications${queryString ? `?${queryString}` : ''}`);
   }
 
@@ -442,8 +442,8 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to register NGO');
+      const error = await response.json() as Record<string, unknown>;
+      throw new Error((error.message as string) || 'Failed to register NGO');
     }
 
     return response.json();
@@ -462,8 +462,8 @@ class ApiClient {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to apply for NGO status');
+      const error = await response.json() as Record<string, unknown>;
+      throw new Error((error.message as string) || 'Failed to apply for NGO status');
     }
 
     return response.json();
@@ -486,7 +486,7 @@ class ApiClient {
   /**
    * Create NGO campaign
    */
-  async createNGOCampaign(data: any) {
+  async createNGOCampaign(data: Record<string, unknown>) {
     return this.post('/ngo/campaigns', data);
   }
 
@@ -500,14 +500,14 @@ class ApiClient {
   /**
    * Create bulk giveaways
    */
-  async createBulkGiveaways(campaignId: string, giveaways: any[]) {
+  async createBulkGiveaways(campaignId: string, giveaways: Record<string, unknown>[]) {
     return this.post(`/ngo/campaigns/${campaignId}/giveaways/bulk`, { giveaways });
   }
 
   /**
    * Create pickup point
    */
-  async createPickupPoint(data: any) {
+  async createPickupPoint(data: Record<string, unknown>) {
     return this.post('/ngo/pickup-points', data);
   }
 
@@ -551,7 +551,7 @@ class ApiClient {
   /**
    * Submit transparency report
    */
-  async submitTransparencyReport(data: any) {
+  async submitTransparencyReport(data: Record<string, unknown>) {
     return this.post('/ngo/trust/transparency-report', data);
   }
 

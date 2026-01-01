@@ -53,7 +53,7 @@ export default function SettingsPage() {
             <div className="mt-4 p-4 bg-green-50 rounded-lg flex items-center space-x-2">
               <PepoBee emotion="idle" size={40} />
               <span className="text-sm text-green-700">
-                Push notifications are enabled! You'll receive alerts for important updates.
+                Push notifications are enabled! You&#39;ll receive alerts for important updates.
               </span>
             </div>
           )}

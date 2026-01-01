@@ -2,20 +2,17 @@
  * Toast notification component for admin panel
  */
 export const toast = {
-  success: (message: string) => {
-    console.log('✅', message);
+  success: (message: string): void => {
     if (typeof window !== 'undefined') {
       alert(message);
     }
   },
-  error: (message: string) => {
-    console.error('❌', message);
+  error: (message: string): void => {
     if (typeof window !== 'undefined') {
       alert(`Error: ${message}`);
     }
   },
-  info: (message: string) => {
-    console.log('ℹ️', message);
+  info: (message: string): void => {
     if (typeof window !== 'undefined') {
       alert(message);
     }

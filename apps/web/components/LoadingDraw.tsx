@@ -82,11 +82,11 @@ export function WinnerCelebration({
             </p>
             {giveawayTitle && (
               <p className="text-lg text-gray-700 mt-2">
-                You've won: <span className="font-semibold">{giveawayTitle}</span>
+                You&#39;ve won: <span className="font-semibold">{giveawayTitle}</span>
               </p>
             )}
             <p className="text-xl text-gray-600 mt-4">
-              You've been selected!
+              You&#39;ve been selected!
             </p>
           </div>
           <button

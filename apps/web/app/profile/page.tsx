@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { PepoBee } from '@/components/PepoBee';
+import { useEffect } from 'react';
+import { apiClient } from '@/lib/apiClient';
+import Badge from '@/components/Badge';
 
 export default function ProfilePage() {
   const [stats] = useState({
@@ -9,6 +12,24 @@ export default function ProfilePage() {
     received: 0,
     participated: 0,
   });
+  const [badges, setBadges] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const me = await apiClient.getCurrentUser();
+        const userId = me?.user?.id;
+        if (userId) {
+          const res = await apiClient.get(`/badges/user/${userId}`);
+          if (mounted) setBadges(res || []);
+        }
+      } catch (e) {
+        // ignore
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background-default">
@@ -18,6 +39,11 @@ export default function ProfilePage() {
           <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6">
             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center">
               <span className="text-5xl">👤</span>
+            </div>
+            <div className="ml-4 flex gap-2 flex-wrap">
+              {badges.map((b) => (
+                <Badge key={b.id} badge={b} />
+              ))}
             </div>
             <div className="text-center md:text-left">
               <h1 className="text-3xl font-bold">User Name</h1>
@@ -122,8 +148,8 @@ export default function ProfilePage() {
   );
 }
 
-function StatCard({ icon, label, value, color }: any) {
-  const colorMap: any = {
+function StatCard({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
+  const colorMap: Record<string, string> = {
     primary: 'from-primary-500 to-primary-600',
     secondary: 'from-secondary-500 to-secondary-600',
     info: 'from-info-500 to-blue-600',
@@ -138,7 +164,7 @@ function StatCard({ icon, label, value, color }: any) {
   );
 }
 
-function SettingItem({ icon, title, description }: any) {
+function SettingItem({ icon, title, description }: { icon: string; title: string; description: string }) {
   return (
     <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
       <div className="flex items-center">

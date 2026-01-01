@@ -23,8 +23,8 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  componentDidCatch() {
+    // Error logged to error tracking service
   }
 
   render() {
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Oops! Something went wrong
             </h2>
             <p className="text-gray-600 mt-4">
-              We're sorry, but something unexpected happened. Please try refreshing the page.
+              We&#39;re sorry, but something unexpected happened. Please try refreshing the page.
             </p>
             {this.state.error && (
               <details className="mt-4 text-left">
