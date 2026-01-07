@@ -5,19 +5,56 @@ import { ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppModule } from './app.module';
 
+// Sentry for error tracking (commented out - package not installed)
+// import * as Sentry from '@sentry/node';
+// import * as Tracing from '@sentry/tracing';
+import compression from 'compression';
+
 async function bootstrap() {
+
+  // Sentry initialization (disabled)
+  // Sentry.init({
+  //   dsn: process.env.SENTRY_DSN || '',
+  //   tracesSampleRate: 1.0,
+  //   environment: process.env.NODE_ENV || 'development',
+  // });
+
   const app = await NestFactory.create(AppModule);
+
+  // Compression middleware
+  app.use(compression());
 
   // Global prefix
   app.setGlobalPrefix('api');
 
   // CORS
+  // CORS with security headers
   app.enableCors({
-    origin: [
-      process.env.WEB_URL || 'http://localhost:3000',
-      process.env.ADMIN_URL || 'http://localhost:3001',
-    ],
+    origin: process.env.NODE_ENV === 'production'
+      ? [
+          process.env.WEB_URL || 'https://pepo.app',
+          process.env.ADMIN_URL || 'https://admin.pepo.app',
+        ]
+      : [
+          process.env.WEB_URL || 'http://localhost:3000',
+          process.env.ADMIN_URL || 'http://localhost:3001',
+          'http://localhost:3002',
+          'http://localhost:3003',
+        ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    exposedHeaders: ['X-Total-Count', 'X-Page-Count'],
+    maxAge: 86400, // 24 hours
+  });
+
+  // Additional security headers
+  app.use((req, res, next) => {
+    res.header('X-Content-Type-Options', 'nosniff');
+    res.header('X-Frame-Options', 'DENY');
+    res.header('X-XSS-Protection', '1; mode=block');
+    res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    next();
   });
 
   // Validation

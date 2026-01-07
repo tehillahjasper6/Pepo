@@ -160,41 +160,44 @@ export class CampaignReminderService {
         select: { userId: true },
       });
 
+      const followerCount = Array.isArray(followers) ? followers.length : 0;
       this.logger.log(
-        `Sending ${reminderType} reminder for campaign ${campaign.id} to ${followers.length} followers`,
+        `Sending ${reminderType} reminder for campaign ${campaign.id} to ${followerCount} followers`,
       );
 
-      for (const follower of followers) {
-        try {
-          // Check if reminder has already been sent (idempotency check)
-          const existingReminder = await this.hasRecentReminder(
-            follower.userId,
-            campaign.id,
-            reminderType,
-          );
+      if (Array.isArray(followers)) {
+        for (const follower of followers) {
+          try {
+            // Check if reminder has already been sent (idempotency check)
+            const existingReminder = await this.hasRecentReminder(
+              follower.userId,
+              campaign.id,
+              reminderType,
+            );
 
-          if (existingReminder) {
-            continue;
+            if (existingReminder) {
+              continue;
+            }
+
+            // Send the reminder
+            await this.sendReminderToUser(
+              follower.userId,
+              campaign,
+              reminderType,
+            );
+
+            // Log the reminder to prevent duplicates
+            await this.logReminderSent(
+              follower.userId,
+              campaign.id,
+              reminderType,
+            );
+          } catch (error) {
+            this.logger.error(
+              `Failed to send ${reminderType} reminder to user ${follower.userId}:`,
+              error,
+            );
           }
-
-          // Send the reminder
-          await this.sendReminderToUser(
-            follower.userId,
-            campaign,
-            reminderType,
-          );
-
-          // Log the reminder to prevent duplicates
-          await this.logReminderSent(
-            follower.userId,
-            campaign.id,
-            reminderType,
-          );
-        } catch (error) {
-          this.logger.error(
-            `Failed to send ${reminderType} reminder to user ${follower.userId}:`,
-            error,
-          );
         }
       }
     } catch (error) {

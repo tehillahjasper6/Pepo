@@ -14,15 +14,15 @@ describe('FollowSuggestionService', () => {
           provide: PrismaService,
           useValue: {
             follow: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
               count: jest.fn(),
             },
             nGOProfile: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
               findUnique: jest.fn(),
             },
             giveaway: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
             },
             user: {
               findUnique: jest.fn(),
@@ -31,7 +31,7 @@ describe('FollowSuggestionService', () => {
               count: jest.fn(),
             },
             followSuggestion: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
               create: jest.fn(),
               update: jest.fn(),
               deleteMany: jest.fn(),

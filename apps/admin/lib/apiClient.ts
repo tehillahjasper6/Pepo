@@ -19,14 +19,6 @@ interface User {
   [key: string]: unknown;
 }
 
-interface NGOApplication {
-  id: string;
-  ngoProfileId: string;
-  organizationName: string;
-  status: string;
-  [key: string]: unknown;
-}
-
 interface Report {
   id: string;
   type: string;
@@ -37,14 +29,25 @@ interface Report {
 interface AuditLog {
   id: string;
   entityType: string;
+  entityId: string;
   action: string;
-  [key: string]: unknown;
+  userId: string;
+  timestamp: string;
+  details?: Record<string, unknown>;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 interface TransparencyReport {
   id: string;
   [key: string]: unknown;
 }
+
+// Import NGOApplication type from the page file for type safety
+import type { NGOApplication } from '../app/ngo-review/page';
 
 class AdminApiClient {
   private baseUrl: string;
@@ -70,22 +73,27 @@ class AdminApiClient {
   ): Promise<T> {
     const { token, ...fetchOptions } = options;
 
-    const headers: HeadersInit = {
+    const headersRecord: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
     };
+
+    // Merge existing headers if they are an object
+    if (options.headers && typeof options.headers === 'object' && !Array.isArray(options.headers)) {
+      const existingHeaders = options.headers as Record<string, string>;
+      Object.assign(headersRecord, existingHeaders);
+    }
 
     // Add authorization header if token exists
     const authToken = token || this.getToken();
     if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
+      headersRecord['Authorization'] = `Bearer ${authToken}`;
     }
 
     const url = `${this.baseUrl}${endpoint}`;
 
     const response = await fetch(url, {
       ...fetchOptions,
-      headers,
+      headers: headersRecord,
     });
 
     if (response.status === 401) {
@@ -279,6 +287,20 @@ class AdminApiClient {
       reviewNotes,
       rejectionReason,
     });
+  }
+
+  /**
+   * Get NGO application details
+   */
+  async getNGOApplication(ngoProfileId: string): Promise<NGOApplication> {
+    return this.get<NGOApplication>(`/admin/ngo/${ngoProfileId}`);
+  }
+
+  /**
+   * Request additional information from NGO
+   */
+  async requestNGOInfo(ngoProfileId: string, requestedInfo: string) {
+    return this.post(`/admin/ngo/${ngoProfileId}/request-info`, { requestedInfo });
   }
 }
 

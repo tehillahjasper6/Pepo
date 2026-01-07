@@ -17,6 +17,7 @@ interface ReportPagination {
   limit: number;
   total: number;
   pages?: number;
+  totalPages?: number;
 }
 
 export default function ReportsPage() {
@@ -133,7 +134,7 @@ export default function ReportsPage() {
                 <option value="DISMISSED">Dismissed</option>
               </select>
               <div className="text-sm text-gray-500">
-                Total: {pagination.total || 0}
+                Total: {typeof pagination.total === 'number' ? pagination.total : 0}
               </div>
             </div>
           </div>
@@ -163,7 +164,7 @@ export default function ReportsPage() {
                           <div>
                             <h3 className="font-semibold">{report.type}</h3>
                             <p className="text-sm text-gray-500">
-                              Reported by: {report.reporter?.name || 'Unknown'} • {new Date(report.createdAt).toLocaleDateString()}
+                              Reported by: {typeof report.reporter === 'object' && report.reporter && 'name' in report.reporter && typeof report.reporter.name === 'string' ? report.reporter.name : 'Unknown'} • {typeof report.createdAt === 'string' || typeof report.createdAt === 'number' ? new Date(report.createdAt).toLocaleDateString() : ''}
                             </p>
                           </div>
                           <span className={`px-2 py-1 text-xs rounded-full ${
@@ -174,10 +175,10 @@ export default function ReportsPage() {
                             {report.status}
                           </span>
                         </div>
-                        <p className="text-gray-700 mb-2">{report.reason}</p>
-                        {report.entityType && (
+                        <p className="text-gray-700 mb-2">{typeof report.reason === 'string' ? report.reason : ''}</p>
+                        {typeof report.entityType === 'string' && report.entityType && (
                           <p className="text-sm text-gray-500">
-                            Entity: {report.entityType} {report.entityId && `(ID: ${report.entityId})`}
+                            Entity: {report.entityType} {('entityId' in report && (typeof report.entityId === 'string' || typeof report.entityId === 'number')) ? `(ID: ${report.entityId})` : ''}
                           </p>
                         )}
                       </div>
@@ -195,7 +196,7 @@ export default function ReportsPage() {
               </div>
 
               {/* Pagination */}
-              {pagination.totalPages > 1 && (
+              {typeof pagination.totalPages === 'number' && pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -205,11 +206,11 @@ export default function ReportsPage() {
                     Previous
                   </button>
                   <span className="text-sm text-gray-500">
-                    Page {page} of {pagination.totalPages}
+                    Page {page} of {typeof pagination.totalPages === 'number' ? pagination.totalPages : 0}
                   </span>
                   <button
-                    onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-                    disabled={page === pagination.totalPages}
+                    onClick={() => setPage(p => Math.min(typeof pagination.totalPages === 'number' ? pagination.totalPages : 1, p + 1))}
+                    disabled={page === (typeof pagination.totalPages === 'number' ? pagination.totalPages : 0)}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
                     Next
@@ -227,8 +228,8 @@ export default function ReportsPage() {
           <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 className="text-xl font-bold mb-4">Resolve Report</h3>
             <div className="mb-4">
-              <p className="text-sm text-gray-600 mb-2">Report Type: {selectedReport.type}</p>
-              <p className="text-sm text-gray-600 mb-2">Reason: {selectedReport.reason}</p>
+              <p className="text-sm text-gray-600 mb-2">Report Type: {typeof selectedReport.type === 'string' ? selectedReport.type : ''}</p>
+              <p className="text-sm text-gray-600 mb-2">Reason: {typeof selectedReport.reason === 'string' ? selectedReport.reason : ''}</p>
             </div>
             <textarea
               value={resolution}

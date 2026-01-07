@@ -6,13 +6,27 @@ import { PepoBee } from '@/components/PepoBee';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { toast } from '@/components/Toast';
 
-interface NGOApplication {
+export interface NGOApplication {
   id: string;
   ngoProfileId: string;
   organizationName: string;
   status: string;
+  organizationType?: string;
+  createdAt?: string;
   documents: Document[];
   reviews?: ReviewRecord[];
+  registrationNumber?: string;
+  country?: string;
+  city?: string;
+  yearEstablished?: number;
+  officialEmail?: string;
+  officialPhone?: string;
+  address?: string;
+  contactName?: string;
+  contactRole?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  riskFlags?: string[];
   [key: string]: unknown;
 }
 
@@ -25,6 +39,10 @@ interface Document {
 
 interface ReviewRecord {
   id: string;
+  reviewer?: { name?: string };
+  reviewedAt?: string;
+  status?: string;
+  notes?: string;
   [key: string]: unknown;
 }
 
@@ -36,6 +54,7 @@ export default function NGOReviewPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [requestInfo, setRequestInfo] = useState('');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchPendingApplications();
   }, []);
@@ -44,15 +63,16 @@ export default function NGOReviewPage() {
     try {
       setLoading(true);
       const data = await adminApiClient.getPendingNGOs();
-      setApplications(data);
+      setApplications(Array.isArray(data.ngos) ? data.ngos : []);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchApplicationDetails = async (ngoProfileId: string): Promise<void> => {
+  // Remove unused ngoProfileId parameter from fetchApplicationDetails
+  const fetchApplicationDetails = async (id: string): Promise<void> => {
     try {
-      const details = await adminApiClient.getNGOApplication(ngoProfileId);
+      const details = await adminApiClient.getNGOApplication(id);
       setSelectedApp(details);
     } catch (error) {
       toast.error('Failed to load application details');
@@ -161,9 +181,9 @@ export default function NGOReviewPage() {
                       }`}
                     >
                       <p className="font-semibold">{app.organizationName}</p>
-                      <p className="text-sm text-gray-600">{app.organizationType}</p>
+                      <p className="text-sm text-gray-600">{app.organizationType ?? ''}</p>
                       <p className="text-xs text-gray-500 mt-1">
-                        {new Date(app.createdAt).toLocaleDateString()}
+                        {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : ''}
                       </p>
                     </button>
                   ))}
@@ -188,12 +208,12 @@ export default function NGOReviewPage() {
                 </div>
 
                 {/* Risk Flags */}
-                {selectedApp.riskFlags && selectedApp.riskFlags.length > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="font-semibold text-red-800 mb-2">⚠️ Risk Flags</p>
+                {selectedApp.riskFlags && Array.isArray(selectedApp.riskFlags) && selectedApp.riskFlags.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-semibold text-red-600 mb-2">Risk Flags:</p>
                     <ul className="list-disc list-inside text-sm text-red-700">
                       {selectedApp.riskFlags.map((flag: string, idx: number) => (
-                        <li key={idx}>{flag.replace('_', ' ')}</li>
+                        <li key={idx}>{flag}</li>
                       ))}
                     </ul>
                   </div>
@@ -205,35 +225,35 @@ export default function NGOReviewPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Registration Number</p>
-                      <p className="font-medium">{selectedApp.registrationNumber}</p>
+                      <p className="font-medium">{selectedApp.registrationNumber ?? ''}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Country</p>
-                      <p className="font-medium">{selectedApp.country}</p>
+                      <p className="font-medium">{selectedApp.country ?? ''}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">City</p>
-                      <p className="font-medium">{selectedApp.city}</p>
+                      <p className="font-medium">{selectedApp.city ?? ''}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Year Established</p>
-                      <p className="font-medium">{selectedApp.yearEstablished || 'N/A'}</p>
+                      <p className="font-medium">{selectedApp.yearEstablished ?? 'N/A'}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Official Email</p>
-                      <p className="font-medium">{selectedApp.officialEmail}</p>
+                      <p className="font-medium">{selectedApp.officialEmail ?? ''}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Official Phone</p>
-                      <p className="font-medium">{selectedApp.officialPhone}</p>
+                      <p className="font-medium">{selectedApp.officialPhone ?? ''}</p>
                     </div>
+                    {selectedApp.address && (
+                      <div className="mt-4">
+                        <p className="text-sm text-gray-600">Address</p>
+                        <p className="font-medium">{selectedApp.address ?? ''}</p>
+                      </div>
+                    )}
                   </div>
-                  {selectedApp.address && (
-                    <div className="mt-4">
-                      <p className="text-sm text-gray-600">Address</p>
-                      <p className="font-medium">{selectedApp.address}</p>
-                    </div>
-                  )}
                 </div>
 
                 {/* Contact Person */}
@@ -242,19 +262,19 @@ export default function NGOReviewPage() {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-600">Name</p>
-                      <p className="font-medium">{selectedApp.contactName}</p>
+                      <p className="font-medium">{selectedApp.contactName ?? ''}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Role</p>
-                      <p className="font-medium">{selectedApp.contactRole}</p>
+                      <p className="font-medium">{selectedApp.contactRole ?? ''}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{selectedApp.contactEmail}</p>
+                      <p className="font-medium">{selectedApp.contactEmail ?? ''}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{selectedApp.contactPhone}</p>
+                      <p className="font-medium">{selectedApp.contactPhone ?? ''}</p>
                     </div>
                   </div>
                 </div>
@@ -292,16 +312,18 @@ export default function NGOReviewPage() {
                         <div key={review.id} className="p-3 bg-gray-50 rounded-lg">
                           <div className="flex justify-between items-start">
                             <div>
-                              <p className="font-medium">{review.reviewer.name}</p>
-                              <p className="text-sm text-gray-600">
-                                {new Date(review.reviewedAt).toLocaleString()}
+                              {review.reviewer && typeof review.reviewer === 'object' && review.reviewer.name ? (
+                                <p className="font-medium">{review.reviewer.name}</p>
+                              ) : null}
+                              <p className="text-xs text-gray-500">
+                                {review.reviewedAt ? new Date(review.reviewedAt).toLocaleString() : ''}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {review.status ?? ''}
                               </p>
                             </div>
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                              {review.status}
-                            </span>
                           </div>
-                          {review.notes && (
+                          {review.notes && typeof review.notes === 'string' && (
                             <p className="text-sm text-gray-700 mt-2">{review.notes}</p>
                           )}
                         </div>

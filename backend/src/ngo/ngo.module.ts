@@ -5,9 +5,10 @@ import { NGOTrustService } from './ngo-trust.service';
 import { NGOTransparencyService } from './ngo-transparency.service';
 import { NGOTrustController } from './ngo-trust.controller';
 import { PrismaModule } from '../prisma/prisma.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, NotificationsModule],
   controllers: [NGOController, NGOTrustController],
   providers: [NGOService, NGOTrustService, NGOTransparencyService],
   exports: [NGOService, NGOTrustService, NGOTransparencyService],

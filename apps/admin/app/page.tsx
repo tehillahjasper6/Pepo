@@ -35,7 +35,8 @@ export default function AdminDashboard() {
       ]);
 
       setStats(statsData);
-      setPendingReports(reportsData.pagination?.total || 0);
+      const pendingReportsCount = typeof reportsData.pagination?.total === 'number' ? reportsData.pagination.total : 0;
+      setPendingReports(pendingReportsCount);
       setPendingNGOs(ngosData.ngos?.length || 0);
     } catch (error) {
       // Handle error silently

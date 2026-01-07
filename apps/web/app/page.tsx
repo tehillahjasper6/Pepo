@@ -7,17 +7,17 @@ import { PepoBee } from '@/components/PepoBee';
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <header className="bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 text-white">
-
-        <div className="container mx-auto px-4 py-20 text-center">
+      {/* Hero Section with Cartoon Images and Mouse Movement */}
+      <header className="bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 text-white relative overflow-hidden">
+        <div className="container mx-auto px-4 py-20 text-center relative">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-8 relative">
               <PepoBee emotion="idle" size={150} />
+              <MouseImageParallax />
             </div>
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               Give Freely. Live Lightly.
@@ -36,87 +36,74 @@ export default function HomePage() {
           </motion.div>
         </div>
       </header>
+// Mouse responsive cartoon images
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 
-      {/* Features Section */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-16">How PEPO Works</h2>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          <FeatureCard
-            icon="🎁"
-            title="Post a Giveaway"
-            description="Share items you no longer need with your community. Upload photos, add details, and set eligibility rules."
-          />
-          <FeatureCard
-            icon="✋"
-            title="Express Interest"
-            description="See something you need? Tap 'I'm Interested' to join the draw. It's free, fair, and simple."
-          />
-          <FeatureCard
-            icon="🎲"
-            title="Random & Fair"
-            description="Givers close the draw anytime. Our system randomly selects winners using secure, auditable randomness."
-          />
-        </div>
-      </section>
+function MouseImageParallax() {
+  const [mouse, setMouse] = useState({ x: 0, y: 0 });
 
-      {/* NGO Section */}
-      <section className="bg-secondary-500/10 py-20">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="text-5xl mb-6">🤝</div>
-            <h2 className="text-4xl font-bold mb-6">NGO & Charity Mode</h2>
-            <p className="text-lg text-gray-700 mb-8">
-              Organizations can create campaigns, manage bulk giveaways, schedule distributions, 
-              and track impact—all with verified badges and transparency tools.
-            </p>
-            <Link href="/ngo" className="btn btn-primary">
-              Learn More About NGO Mode
-            </Link>
-          </div>
-        </div>
-      </section>
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMouse({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
-      {/* Values Section */}
-      <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-16">Our Values</h2>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <ValueCard
-            icon="🤲"
-            title="Generosity"
-            description="Give without expectation. Receive with gratitude."
-          />
-          <ValueCard
-            icon="⚖️"
-            title="Fairness"
-            description="Random selection ensures everyone has an equal chance."
-          />
-          <ValueCard
-            icon="🕊️"
-            title="Dignity"
-            description="No favoritism, no pressure, no social ranking."
-          />
-          <ValueCard
-            icon="🔒"
-            title="Privacy"
-            description="Your data is secure. Share only what you choose."
-          />
-        </div>
-      </section>
+  // Calculate offset for parallax effect
+  const offset = (factor: number) => ({
+    x: (mouse.x - window.innerWidth / 2) * factor,
+    y: (mouse.y - window.innerHeight / 2) * factor,
+  });
 
-      {/* CTA Section */}
-      <section className="bg-primary-500 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-4xl font-bold mb-6">Ready to start giving or receiving?</h2>
-          <p className="text-xl mb-8 max-w-2xl mx-auto">
-            Join thousands of community members sharing and caring through PEPO.
-          </p>
-          <Link href="/signup" className="btn bg-white text-primary-600 text-lg hover:scale-105">
-            Create Free Account
-          </Link>
-        </div>
-      </section>
+  return (
+    <>
+      <motion.div
+        style={{ position: 'absolute', left: '10%', top: '40%', zIndex: 2 }}
+        animate={offset(0.03)}
+        transition={{ type: 'spring', stiffness: 100 }}
+      >
+        <Image
+          src="/images/illustrations/givers.png"
+          alt="Giver cartoon"
+          width={220}
+          height={320}
+          priority
+        />
+      </motion.div>
+      <motion.div
+        style={{ position: 'absolute', right: '10%', top: '45%', zIndex: 2 }}
+        animate={offset(-0.03)}
+        transition={{ type: 'spring', stiffness: 100 }}
+      >
+        <Image
+          src="/images/illustrations/receivers.png"
+          alt="Receiver cartoon"
+          width={220}
+          height={320}
+          priority
+        />
+      </motion.div>
+      <motion.div
+        style={{ position: 'absolute', left: '50%', top: '70%', zIndex: 1, transform: 'translateX(-50%)' }}
+        animate={offset(0.01)}
+        transition={{ type: 'spring', stiffness: 100 }}
+      >
+        <Image
+          src="/images/illustrations/community.png"
+          alt="Community cartoon"
+          width={180}
+          height={180}
+          priority
+        />
+      </motion.div>
+    </>
+  );
+}
+
+      
     </div>
   );
 }

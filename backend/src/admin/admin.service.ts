@@ -1,6 +1,7 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { NGOTransparencyService } from '../ngo/ngo-transparency.service';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
 export class AdminService {
@@ -10,16 +11,182 @@ export class AdminService {
     this.transparencyService = new NGOTransparencyService(prisma);
   }
 
-  private verifyAdmin(userRole: string) {
-    if (userRole !== 'ADMIN') {
+  private verifyAdmin(userRole: UserRole) {
+    if (userRole !== UserRole.ADMIN) {
       throw new ForbiddenException('Admin access required');
     }
   }
 
   /**
+   * Get all users for admin dashboard
+   */
+  async getUsers(userRole: UserRole, filters?: any) {
+    if (userRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const where: any = {};
+
+    if (filters?.role) {
+      where.role = filters.role;
+    }
+
+
+    if (filters?.status) {
+      if (filters.status === 'active') {
+        where.isActive = true;
+      } else if (filters.status === 'inactive') {
+        where.isActive = false;
+      } else if (filters.status === 'verified') {
+        where.idVerified = true;
+      } else if (filters.status === 'unverified') {
+        where.idVerified = false;
+      }
+    }
+
+    if (filters?.search) {
+      where.OR = [
+        { email: { contains: filters.search, mode: 'insensitive' } },
+        { name: { contains: filters.search, mode: 'insensitive' } },
+        { phone: { contains: filters.search } },
+      ];
+    }
+
+    const users = await this.prisma.user.findMany({
+      where,
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        name: true,
+        role: true,
+        isActive: true,
+        idVerified: true,
+        createdAt: true,
+        lastLoginAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return {
+      users,
+      total: users.length,
+    };
+  }
+
+  /**
+   * Get user by ID
+   */
+  async getUserById(userRole: UserRole, userId: string) {
+    if (userRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        name: true,
+        role: true,
+        isActive: true,
+        idVerified: true,
+        createdAt: true,
+        lastLoginAt: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return { user };
+  }
+
+  /**
+   * Update user role or status
+   */
+  async updateUser(
+    userRole: UserRole,
+    currentUserId: string,
+    userId: string,
+    updateData: { role?: UserRole; isActive?: boolean },
+  ) {
+    if (userRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    if (userId === currentUserId && updateData.role) {
+      throw new ForbiddenException('Cannot change your own role');
+    }
+
+    // Only admins can promote to admin
+    if (updateData.role === UserRole.ADMIN && userRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Only admins can promote users to admin');
+    }
+
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        phone: true,
+        name: true,
+        role: true,
+        isActive: true,
+        idVerified: true,
+        createdAt: true,
+        lastLoginAt: true,
+      },
+    });
+
+    return { user };
+  }
+
+  /**
+   * Delete user
+   */
+  async deleteUser(userRole: UserRole, currentUserId: string, userId: string) {
+    if (userRole !== UserRole.ADMIN) {
+      throw new ForbiddenException('Admin access required');
+    }
+
+    if (userId === currentUserId) {
+      throw new ForbiddenException('Cannot delete your own account');
+    }
+
+    // Delete related data in transaction
+    await this.prisma.$transaction([
+      this.prisma.message.deleteMany({
+        where: {
+          OR: [{ senderId: userId }, { receiverId: userId }],
+        },
+      }),
+      this.prisma.participant.deleteMany({
+        where: { userId },
+      }),
+      this.prisma.giveaway.deleteMany({
+        where: { userId },
+      }),
+      this.prisma.notification.deleteMany({
+        where: { userId },
+      }),
+      this.prisma.user.delete({
+        where: { id: userId },
+      }),
+    ]);
+
+    return { message: 'User deleted successfully' };
+  }
+
+  /**
    * Get platform statistics
    */
-  async getPlatformStats(userRole: string) {
+  async getPlatformStats(userRole: UserRole) {
     this.verifyAdmin(userRole);
 
     const [totalUsers, totalGiveaways, totalNGOs, totalWinners] = await Promise.all([
@@ -51,47 +218,12 @@ export class AdminService {
     };
   }
 
-  /**
-   * Get all users with filters
-   */
-  async getUsers(userRole: string, filters?: any) {
-    this.verifyAdmin(userRole);
-
-    const where: any = {};
-
-    if (filters?.role) {
-      where.role = filters.role;
-    }
-
-    if (filters?.search) {
-      where.OR = [
-        { name: { contains: filters.search, mode: 'insensitive' } },
-        { email: { contains: filters.search, mode: 'insensitive' } },
-      ];
-    }
-
-    return this.prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatar: true,
-        city: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        lastLoginAt: true,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-    });
-  }
+  // Duplicate getUsers removed. See earlier implementation for logic.
 
   /**
    * Update user status
    */
-  async updateUserStatus(userRole: string, userId: string, isActive: boolean) {
+  async updateUserStatus(userRole: UserRole, userId: string, isActive: boolean) {
     this.verifyAdmin(userRole);
 
     return this.prisma.user.update({
@@ -103,7 +235,7 @@ export class AdminService {
   /**
    * Get pending NGO applications
    */
-  async getPendingNGOs(userRole: string) {
+  async getPendingNGOs(userRole: UserRole) {
     this.verifyAdmin(userRole);
 
     return this.prisma.nGOProfile.findMany({
@@ -125,7 +257,7 @@ export class AdminService {
   /**
    * Get NGO application details for review
    */
-  async getNGOApplication(userRole: string, ngoProfileId: string) {
+  async getNGOApplication(userRole: UserRole, ngoProfileId: string) {
     this.verifyAdmin(userRole);
 
     const ngoProfile = await this.prisma.nGOProfile.findUnique({
@@ -202,7 +334,7 @@ export class AdminService {
    * Verify NGO
    */
   async verifyNGO(
-    userRole: string,
+    userRole: UserRole,
     adminUserId: string,
     ngoProfileId: string,
     notes?: string,
@@ -227,7 +359,7 @@ export class AdminService {
     // Update user role
     await this.prisma.user.update({
       where: { id: ngoProfile.userId },
-      data: { role: 'NGO' },
+      data: { role: UserRole.NGO },
     });
 
     // Create review record
@@ -299,7 +431,7 @@ export class AdminService {
    * Reject NGO
    */
   async rejectNGO(
-    userRole: string,
+    userRole: UserRole,
     adminUserId: string,
     ngoProfileId: string,
     reason: string,
@@ -357,7 +489,7 @@ export class AdminService {
    * Request additional information from NGO
    */
   async requestNGOInfo(
-    userRole: string,
+    userRole: UserRole,
     adminUserId: string,
     ngoProfileId: string,
     requestedInfo: string,
@@ -396,7 +528,7 @@ export class AdminService {
   /**
    * Get reports
    */
-  async getReports(userRole: string, status?: string) {
+  async getReports(userRole: UserRole, status?: string) {
     this.verifyAdmin(userRole);
 
     const where: any = {};
@@ -421,7 +553,7 @@ export class AdminService {
   /**
    * Resolve report
    */
-  async resolveReport(userRole: string, adminUserId: string, reportId: string, resolution: string) {
+  async resolveReport(userRole: UserRole, adminUserId: string, reportId: string, resolution: string) {
     this.verifyAdmin(userRole);
 
     return this.prisma.report.update({
@@ -438,7 +570,7 @@ export class AdminService {
   /**
    * Get audit logs
    */
-  async getAuditLogs(userRole: string, filters?: any) {
+  async getAuditLogs(userRole: UserRole, filters?: any) {
     this.verifyAdmin(userRole);
 
     const where: any = {};

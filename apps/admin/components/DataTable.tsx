@@ -69,11 +69,15 @@ export function DataTable({
           <tbody>
             {data.map((row, idx) => (
               <tr key={idx} className="border-b hover:bg-gray-50 transition">
-                {columns.map((col) => (
-                  <td key={col.key} className="px-6 py-4 text-sm text-gray-900">
-                    {col.render ? col.render(row[col.key], row) : row[col.key]}
-                  </td>
-                ))}
+                {columns.map((col) => {
+                  const value = row[col.key];
+                  const content = col.render ? col.render(value, row) : (typeof value === 'string' || typeof value === 'number' ? String(value) : '');
+                  return (
+                    <td key={col.key} className="px-6 py-4 text-sm text-gray-900">
+                      {content}
+                    </td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>

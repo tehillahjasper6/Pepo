@@ -24,17 +24,17 @@ export function PepoBee({
   const [shouldLoop, setShouldLoop] = useState(true);
 
   useEffect(() => {
-    const animationMap = {
+    const animationMap: Record<PepoEmotion, unknown> = {
       idle: idleAnimation,
       loading: loadingAnimation,
     };
 
-    const loopMap = {
+    const loopMap: Record<PepoEmotion, boolean> = {
       idle: true,
       loading: true,
     };
 
-    setAnimationData(animationMap[emotion]);
+    setAnimationData(animationMap[emotion] as typeof idleAnimation);
     setShouldLoop(loopMap[emotion]);
   }, [emotion]);
 

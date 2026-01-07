@@ -58,7 +58,7 @@ export function ToastContainer() {
   );
 }
 
-function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
+export function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
   const typeStyles = {
     success: 'bg-secondary-500 text-white',
     error: 'bg-warning-500 text-white',
@@ -109,6 +109,8 @@ export const toast = {
     useToast.getState().addToast({ message, type: 'warning', duration });
   },
 };
+
+// Only named exports above; no need for duplicate export
 
 
 

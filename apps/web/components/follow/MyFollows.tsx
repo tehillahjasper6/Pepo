@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMyFollows } from '@/hooks/useFollows';
-import { Loader2, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FollowButton } from './FollowButton';
 
 interface MyFollowsProps {
@@ -60,14 +60,6 @@ export function MyFollows({
   }
 
   const { data: follows, pagination } = data;
-
-  // Sync local page with server pagination if it differs
-  useEffect(() => {
-    if (pagination?.page && pagination.page !== page) {
-      setPage(pagination.page);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination?.page]);
 
   // Debounce search term updates
   useEffect(() => {

@@ -2,10 +2,32 @@ import React, { useEffect, useState } from 'react';
 import { fraudAPI } from '@/lib/api/fraud';
 
 interface FraudStats {
+  total?: number;
+  pending?: number;
+  reviewed?: number;
+  flagged?: number;
+  suspended?: number;
+  avgRiskScore?: number;
   [key: string]: unknown;
 }
 
 interface PendingReview {
+  id?: string | number;
+  riskScore?: number;
+  reason?: string;
+  reportedBy?: string;
+  timestamp?: string;
+  flagType?: string;
+  description?: string;
+  user?: { 
+    name?: string;
+    createdAt?: string | Date;
+    _count?: {
+      giveaways?: number;
+      interests?: number;
+    };
+  };
+  userId?: string;
   [key: string]: unknown;
 }
 
@@ -31,10 +53,12 @@ const FraudDetectionDashboard: React.FC = () => {
     fetchData();
   }, []);
 
-  const handleResolveFlag = async (flagId: string, action: string, resolution: string): Promise<void> => {
-    setResolving(flagId);
+  const handleResolveFlag = async (flagId: string | number | undefined, action: string, resolution: string): Promise<void> => {
+    if (flagId === undefined) return;
+    const idString = typeof flagId === 'string' ? flagId : String(flagId);
+    setResolving(idString);
     try {
-      await fraudAPI.resolveFlag(flagId, { action, resolution });
+      await fraudAPI.resolveFlag(idString, { action, resolution });
       // Refresh data
       const reviewsData = await fraudAPI.getPendingReviews();
       setPendingReviews(reviewsData);
@@ -43,22 +67,25 @@ const FraudDetectionDashboard: React.FC = () => {
     }
   };
 
-  const getRiskColor = (score: number) => {
-    if (score >= 70) return 'bg-red-50 border-red-200';
-    if (score >= 50) return 'bg-orange-50 border-orange-200';
-    if (score >= 25) return 'bg-yellow-50 border-yellow-200';
+  const getRiskColor = (score: number | undefined) => {
+    const numScore = score || 0;
+    if (numScore >= 70) return 'bg-red-50 border-red-200';
+    if (numScore >= 50) return 'bg-orange-50 border-orange-200';
+    if (numScore >= 25) return 'bg-yellow-50 border-yellow-200';
     return 'bg-green-50 border-green-200';
   };
 
-  const getRiskBadgeColor = (score: number) => {
-    if (score >= 70) return 'text-white bg-red-600';
-    if (score >= 50) return 'text-white bg-orange-600';
-    if (score >= 25) return 'text-white bg-yellow-600';
+  const getRiskBadgeColor = (score: number | undefined) => {
+    const numScore = score || 0;
+    if (numScore >= 70) return 'text-white bg-red-600';
+    if (numScore >= 50) return 'text-white bg-orange-600';
+    if (numScore >= 25) return 'text-white bg-yellow-600';
     return 'text-white bg-green-600';
   };
 
-  const getFlagTypeLabel = (type: string) => {
-    return type
+  const getFlagTypeLabel = (type: string | undefined) => {
+    const str = type || '';
+    return str
       .split('_')
       .map(w => w.charAt(0).toUpperCase() + w.slice(1))
       .join(' ');
@@ -131,7 +158,9 @@ const FraudDetectionDashboard: React.FC = () => {
                     {flag.user && (
                       <div className="text-xs text-gray-600 space-y-1">
                         <p><strong>Recent Activities:</strong> {flag.user._count?.giveaways || 0} giveaways, {flag.user._count?.interests || 0} interests</p>
-                        <p><strong>Account Age:</strong> {Math.floor((Date.now() - new Date(flag.user.createdAt).getTime()) / (1000 * 60 * 60 * 24))} days</p>
+                        {flag.user.createdAt && (
+                          <p><strong>Account Age:</strong> {Math.floor((Date.now() - new Date(flag.user.createdAt).getTime()) / (1000 * 60 * 60 * 24))} days</p>
+                        )}
                       </div>
                     )}
                   </div>

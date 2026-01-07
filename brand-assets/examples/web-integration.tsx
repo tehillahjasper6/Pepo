@@ -34,7 +34,7 @@ export function PepoBee({
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
-    const animationMap = {
+    const animationMap: Record<PepoEmotion, unknown> = {
       [PepoEmotion.IDLE]: idleAnimation,
       [PepoEmotion.CELEBRATING]: celebrateAnimation,
       [PepoEmotion.GIVING]: giveAnimation,
@@ -44,7 +44,7 @@ export function PepoBee({
       [PepoEmotion.TRUST]: idleAnimation,
     };
 
-    const loopMap = {
+    const loopMap: Record<PepoEmotion, boolean> = {
       [PepoEmotion.IDLE]: true,
       [PepoEmotion.CELEBRATING]: false,
       [PepoEmotion.GIVING]: false,
@@ -54,7 +54,7 @@ export function PepoBee({
       [PepoEmotion.TRUST]: false,
     };
 
-    setCurrentAnimation(animationMap[emotion]);
+    setCurrentAnimation(animationMap[emotion] as typeof idleAnimation);
     setLoop(loopMap[emotion]);
   }, [emotion]);
 
@@ -113,7 +113,12 @@ export function SmartPepoBee({ action, data, ngoMode = false }: any) {
 /**
  * Pepo Logo Component
  */
-export function PepoLogo({ variant = 'wordmark', size = 'medium' }: any) {
+interface PepoLogoProps {
+  variant?: 'mascot' | 'wordmark' | 'hive';
+  size?: 'small' | 'medium' | 'large';
+}
+
+export function PepoLogo({ variant = 'wordmark', size = 'medium' }: PepoLogoProps) {
   const sizeMap = {
     small: 150,
     medium: 250,

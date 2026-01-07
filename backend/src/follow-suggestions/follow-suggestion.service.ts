@@ -224,14 +224,14 @@ export class FollowSuggestionService {
         return 0.5; // Neutral score if no follows yet
       }
 
-      // Extract categories from followed NGOs
+
+      // Extract categories from followed NGOs, safely
       const userCategories = userFollows
-        .map((f) => f.ngo.focusAreas)
-        .filter(Boolean)
+        .map((f) => Array.isArray(f.ngo?.focusAreas) ? f.ngo.focusAreas : [])
         .flat();
 
-      // Check if suggested NGO matches user's categories
-      if (ngo.focusAreas && userCategories.some((cat: string) => ngo.focusAreas.includes(cat))) {
+      // Check if suggested NGO matches user's categories, safely
+      if (Array.isArray(ngo.focusAreas) && userCategories.some((cat: string) => ngo.focusAreas.includes(cat))) {
         return 0.9; // High match
       }
 

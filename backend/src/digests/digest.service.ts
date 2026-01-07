@@ -238,19 +238,20 @@ export class DigestService {
           take: 20,
         });
 
-        items.push(
-          ...newGiveaways.map((g) => ({
-            type: 'NEW_GIVEAWAY',
-            id: g.id,
-            title: g.title,
-            ngo: g.user.ngoProfile?.organizationName,
-            description: g.description,
-            timestamp: g.publishedAt,
-            link: `/giveaway/${g.id}`,
-          })),
-        );
-
-        summary.newPosts = newGiveaways.length;
+        if (Array.isArray(newGiveaways)) {
+          items.push(
+            ...newGiveaways.map((g) => ({
+              type: 'NEW_GIVEAWAY',
+              id: g.id,
+              title: g.title,
+              ngo: g.user?.ngoProfile?.organizationName || 'Unknown NGO',
+              description: g.description,
+              timestamp: g.publishedAt,
+              link: `/giveaway/${g.id}`,
+            })),
+          );
+          summary.newPosts = newGiveaways.length;
+        }
       }
 
       // If content scope includes campaigns, fetch active campaigns
@@ -270,19 +271,20 @@ export class DigestService {
           take: 10,
         });
 
-        items.push(
-          ...activeCampaigns.map((c) => ({
-            type: 'NEW_CAMPAIGN',
-            id: c.id,
-            title: c.title,
-            ngo: c.ngoProfile.organizationName,
-            description: c.description,
-            timestamp: c.createdAt,
-            link: `/campaign/${c.slug}`,
-          })),
-        );
-
-        summary.campaigns = activeCampaigns.length;
+        if (Array.isArray(activeCampaigns)) {
+          items.push(
+            ...activeCampaigns.map((c) => ({
+              type: 'NEW_CAMPAIGN',
+              id: c.id,
+              title: c.title,
+              ngo: c.ngoProfile?.organizationName || 'Unknown NGO',
+              description: c.description,
+              timestamp: c.createdAt,
+              link: `/campaign/${c.slug}`,
+            })),
+          );
+          summary.campaigns = activeCampaigns.length;
+        }
       }
 
       // If content scope includes completed giveaways, fetch completions
@@ -307,19 +309,20 @@ export class DigestService {
           take: 10,
         });
 
-        items.push(
-          ...completedGiveaways.map((g) => ({
-            type: 'COMPLETED_GIVEAWAY',
-            id: g.id,
-            title: g.title,
-            ngo: g.user.ngoProfile?.organizationName,
-            winnersCount: g.winners.length,
-            timestamp: g.updatedAt,
-            link: `/giveaway/${g.id}`,
-          })),
-        );
-
-        summary.completed = completedGiveaways.length;
+        if (Array.isArray(completedGiveaways)) {
+          items.push(
+            ...completedGiveaways.map((g) => ({
+              type: 'COMPLETED_GIVEAWAY',
+              id: g.id,
+              title: g.title,
+              ngo: g.user?.ngoProfile?.organizationName || 'Unknown NGO',
+              winnersCount: Array.isArray(g.winners) ? g.winners.length : 0,
+              timestamp: g.updatedAt,
+              link: `/giveaway/${g.id}`,
+            })),
+          );
+          summary.completed = completedGiveaways.length;
+        }
       }
 
       // Sort items by timestamp, newest first

@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import * as bcrypt from 'bcrypt';
 import { randomInt } from 'crypto';
 
@@ -8,7 +9,8 @@ import { randomInt } from 'crypto';
 export class AuthService {
   constructor(
     private prisma: PrismaService,
-    private jwtService: JwtService
+    private jwtService: JwtService,
+    private emailService: EmailService
   ) {}
 
   /**
@@ -70,12 +72,17 @@ export class AuthService {
       },
     });
 
-    // TODO: Send OTP via email or SMS
-    // For now, log it (in production, use SendGrid/Mailgun for email, Twilio for SMS)
+    // Send OTP via email or SMS
     if (email) {
-      console.log(`🔐 OTP for ${email}: ${code}`);
+      const sent = await this.emailService.sendOTPEmail(email, code, 10);
+      if (!sent) {
+        console.warn(`⚠️ Failed to send OTP email to ${email}, but OTP was stored`);
+      }
     } else if (phone) {
-      console.log(`🔐 OTP for ${phone}: ${code}`);
+      const sent = await this.emailService.sendOTPSMS(phone, code, 10);
+      if (!sent) {
+        console.warn(`⚠️ Failed to send OTP SMS to ${phone}, but OTP was stored`);
+      }
     }
 
     return { 

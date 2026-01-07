@@ -70,7 +70,8 @@ export default function MessagesPage({ params }: { params: { giveawayId: string 
       await sendMessage(content);
       // Message will be added via WebSocket
     } catch (error: unknown) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to send message';\n      toast.error(errorMsg);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to send message';
+      toast.error(errorMsg);
       setMessageInput(content); // Restore message
     } finally {
       setSending(false);

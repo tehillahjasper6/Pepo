@@ -19,58 +19,42 @@ const NGOWishlist: React.FC<{ ngoId?: string; isPublic?: boolean }> = ({
   useEffect(() => {
     const fetchWishlist = async () => {
       try {
-        // TODO: Fetch from API
-        setWishlist({
-          ngoId,
-          wishlistItems: [
-            {
-              id: 'wish_1',
-              itemName: 'Winter Coats',
-              description: 'Warm coats for homeless individuals',
-              category: 'clothing',
-              quantity: 50,
-              urgency: 'critical',
-              fulfilled: 15,
-              image: null,
-            },
-            {
-              id: 'wish_2',
-              itemName: 'Medical Supplies',
-              description: 'Bandages, antibiotics, pain relief',
-              category: 'health',
-              quantity: 100,
-              urgency: 'high',
-              fulfilled: 45,
-              image: null,
-            },
-          ],
-          stats: {
-            totalItems: 2,
-            fulfilledItems: 1,
-            percentageComplete: 50,
-          },
-        });
+        const res = await fetch(`/api/ngo/${ngoId}/wishlist`);
+        if (!res.ok) throw new Error('Failed to fetch wishlist');
+        const data = await res.json();
+        setWishlist(data);
       } catch (error) {
-        console.error('Failed to fetch wishlist:', error);
+        alert('Failed to fetch wishlist. Please try again later.');
+        setWishlist(null);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchWishlist();
+    if (ngoId) fetchWishlist();
   }, [ngoId]);
 
   const handleAddItem = async () => {
-    // TODO: Call API to add item
-    console.log('Adding item:', newItem);
-    setNewItem({
-      itemName: '',
-      description: '',
-      category: 'other',
-      quantity: 1,
-      urgency: 'medium',
-    });
-    setShowForm(false);
+    try {
+      const res = await fetch(`/api/ngo/${ngoId}/wishlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newItem),
+      });
+      if (!res.ok) throw new Error('Failed to add item');
+      // Optionally, refetch wishlist
+      const updated = await res.json();
+      setWishlist(updated);
+      setNewItem({
+        itemName: '',
+        description: '',
+        category: 'other',
+        quantity: 1,
+        urgency: 'medium',
+      });
+      setShowForm(false);
+    } catch (error) {
+      alert('Failed to add item. Please try again.');
+    }
   };
 
   const getUrgencyColor = (urgency: string) => {

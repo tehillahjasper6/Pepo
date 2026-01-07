@@ -31,7 +31,8 @@ export default function BrowsePage() {
       filterParams.search = debouncedSearch;
     }
     setFilters(filterParams);
-  }, [filter, debouncedSearch, setFilters]);
+    fetchGiveaways(); // Trigger fetch when filters change
+  }, [filter, debouncedSearch, setFilters, fetchGiveaways]);
 
   useEffect(() => {
     // Show error toast if there's an error

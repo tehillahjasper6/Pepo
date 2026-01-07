@@ -3,12 +3,14 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { RedisService } from '../redis/redis.service';
+import { EmailService } from '../email/email.service';
 
 describe('AuthService', () => {
   let service: AuthService;
   let prismaService: PrismaService;
   let jwtService: JwtService;
   let redisService: RedisService;
+  let emailService: EmailService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -38,6 +40,13 @@ describe('AuthService', () => {
             del: jest.fn(),
           },
         },
+        {
+          provide: EmailService,
+          useValue: {
+            sendOTPEmail: jest.fn(),
+            sendOTPSMS: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
@@ -45,6 +54,7 @@ describe('AuthService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
     jwtService = module.get<JwtService>(JwtService);
     redisService = module.get<RedisService>(RedisService);
+    emailService = module.get<EmailService>(EmailService);
   });
 
   it('should be defined', () => {

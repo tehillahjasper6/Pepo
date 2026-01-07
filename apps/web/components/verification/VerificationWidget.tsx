@@ -8,40 +8,20 @@ const VerificationWidget: React.FC<{ userId: string }> = ({ userId }) => {
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        // TODO: Fetch from API
-        setStatus({
-          verificationSteps: [
-            { type: 'email', status: 'verified' },
-            { type: 'phone', status: 'pending' },
-            { type: 'government_id', status: 'pending' },
-            { type: 'address', status: 'pending' },
-          ],
-          isFullyVerified: false,
-          completionPercentage: 25,
-          verificationLevel: 'UNVERIFIED',
-          benefits: [],
-        });
-
-        // TODO: Fetch badge
-        setBadge({
-          badges: [
-            {
-              type: 'email_verified',
-              label: 'Email Verified',
-              icon: '✉️',
-              color: 'blue',
-            },
-          ],
-          trustBoost: 5,
-        });
+        const res = await fetch(`/api/user/${userId}/verification`);
+        if (!res.ok) throw new Error('Failed to fetch verification status');
+        const data = await res.json();
+        setStatus(data.status);
+        setBadge(data.badge);
       } catch (error) {
-        console.error('Failed to fetch verification status:', error);
+        alert('Failed to fetch verification status. Please try again later.');
+        setStatus(null);
+        setBadge(null);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchStatus();
+    if (userId) fetchStatus();
   }, [userId]);
 
   if (loading) {

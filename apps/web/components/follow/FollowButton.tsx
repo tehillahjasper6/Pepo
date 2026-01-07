@@ -4,7 +4,6 @@ import { Loader2, Heart, HeartOff, MoreVertical, EyeOff } from 'lucide-react';
 
 interface FollowButtonProps {
   ngoId: string;
-  ngoName?: string;
   className?: string;
   variant?: 'primary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
@@ -18,7 +17,6 @@ interface FollowButtonProps {
  */
 export function FollowButton({
   ngoId,
-  ngoName,
   className = '',
   variant = 'primary',
   size = 'md',

@@ -17,19 +17,19 @@ describe('CampaignReminderService', () => {
           provide: PrismaService,
           useValue: {
             campaign: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
             },
             follow: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
             },
             campaignReminderLog: {
               findFirst: jest.fn(),
               create: jest.fn(),
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
               deleteMany: jest.fn(),
             },
             campaignReminderSetting: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
               upsert: jest.fn(),
               updateMany: jest.fn(),
             },

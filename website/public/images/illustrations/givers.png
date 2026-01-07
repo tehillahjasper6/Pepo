@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="700" viewBox="0 0 1000 700" fill="none">
+  <defs>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7BC043;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#5A9A37;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="700" fill="#F0F9E8"/>
+  <circle cx="500" cy="350" r="150" fill="url(#grad2)" opacity="0.3"/>
+  <text x="500" y="370" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">
+    Givers Making Difference
+  </text>
+  <text x="500" y="405" font-family="Arial, sans-serif" font-size="14" text-anchor="middle" fill="#666">
+    Your generosity builds communities
+  </text>
+</svg>

@@ -1,7 +1,8 @@
-import { Controller, Get, Put, Post, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, Param, Query, UseGuards, Request, Delete, Patch } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { UserRole } from '@pepo/types';
 
 @ApiTags('admin')
 @Controller('admin')
@@ -20,6 +21,28 @@ export class AdminController {
   @ApiOperation({ summary: 'Get all users' })
   async getUsers(@Request() req, @Query() filters: any) {
     return this.adminService.getUsers(req.user.role, filters);
+  }
+
+  @Get('users/:id')
+  @ApiOperation({ summary: 'Get user by ID' })
+  async getUserById(@Request() req, @Param('id') userId: string) {
+    return this.adminService.getUserById(req.user.role, userId);
+  }
+
+  @Patch('users/:id')
+  @ApiOperation({ summary: 'Update user role or status' })
+  async updateUser(
+    @Request() req,
+    @Param('id') userId: string,
+    @Body() updateData: { role?: UserRole; isActive?: boolean },
+  ) {
+    return this.adminService.updateUser(req.user.role as UserRole, req.user.id, userId, updateData);
+  }
+
+  @Delete('users/:id')
+  @ApiOperation({ summary: 'Delete user' })
+  async deleteUser(@Request() req, @Param('id') userId: string) {
+    return this.adminService.deleteUser(req.user.role, req.user.id, userId);
   }
 
   @Put('users/:userId/status')

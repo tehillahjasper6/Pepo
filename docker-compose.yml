@@ -38,8 +38,8 @@ services:
   # Backend API (Development)
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: pepo-backend
     restart: unless-stopped
     depends_on:
@@ -53,13 +53,32 @@ services:
       REDIS_PORT: 6379
       JWT_SECRET: your-secret-key-change-in-production
       NODE_ENV: development
-      PORT: 4000
+      PORT: 3000
     ports:
-      - '4000:4000'
+      - '3000:3000'
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: npm run start:dev
+    command: npm run start:dev --workspace=@pepo/backend
+
+  # Admin Frontend
+  admin:
+    build:
+      context: .
+      dockerfile: apps/admin/Dockerfile
+    container_name: pepo-admin
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NODE_ENV: development
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./apps/admin:/app/apps/admin
+      - /app/apps/admin/node_modules
+      - /app/apps/admin/.next
 
 volumes:
   postgres_data:

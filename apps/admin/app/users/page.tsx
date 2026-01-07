@@ -94,7 +94,7 @@ export default function UsersPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Users</h2>
             <div className="text-sm text-gray-500">
-              Total: {pagination.total || 0}
+              Total: {typeof pagination.total === 'number' ? pagination.total : 0}
             </div>
           </div>
 
@@ -173,8 +173,8 @@ export default function UsersPage() {
                               {user.name?.charAt(0).toUpperCase() || 'U'}
                             </div>
                             <div className="ml-3">
-                              <div className="font-medium">{user.name}</div>
-                              <div className="text-sm text-gray-500">{user.city}</div>
+                              <div className="font-medium">{typeof user.name === 'string' ? user.name : ''}</div>
+                              <div className="text-sm text-gray-500">{typeof user.city === 'string' ? user.city : ''}</div>
                             </div>
                           </div>
                         </td>
@@ -198,7 +198,7 @@ export default function UsersPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500">
-                          {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
+                          {typeof user.createdAt === 'string' || typeof user.createdAt === 'number' ? new Date(user.createdAt).toLocaleDateString() : '-'}
                         </td>
                         <td className="px-4 py-3">
                           <select
@@ -218,7 +218,7 @@ export default function UsersPage() {
               </div>
 
               {/* Pagination */}
-              {pagination.totalPages > 1 && (
+              {typeof pagination.totalPages === 'number' && pagination.totalPages > 1 && (
                 <div className="flex items-center justify-between mt-6">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -228,11 +228,11 @@ export default function UsersPage() {
                     Previous
                   </button>
                   <span className="text-sm text-gray-500">
-                    Page {page} of {pagination.totalPages}
+                    Page {page} of {typeof pagination.totalPages === 'number' ? pagination.totalPages : 0}
                   </span>
                   <button
-                    onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-                    disabled={page === pagination.totalPages}
+                    onClick={() => setPage(p => Math.min(typeof pagination.totalPages === 'number' ? pagination.totalPages : 1, p + 1))}
+                    disabled={page === (typeof pagination.totalPages === 'number' ? pagination.totalPages : 0)}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
                     Next

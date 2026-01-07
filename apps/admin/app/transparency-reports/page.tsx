@@ -7,6 +7,21 @@ import { adminApiClient } from '@/lib/apiClient';
 
 interface TransparencyReport {
   id: string;
+  ngoProfile?: { organizationName?: string };
+  periodStart?: string | number;
+  periodEnd?: string | number;
+  reportFrequency?: string;
+  campaignCount?: number;
+  itemsDistributed?: number;
+  beneficiariesReached?: number;
+  locationsServed?: string[];
+  fundsReceivedMin?: number;
+  fundsReceivedMax?: number;
+  fundsUtilized?: Record<string, unknown>;
+  successStories?: Array<Record<string, unknown>>;
+  submittedAt?: string | number;
+  challenges?: string;
+  lessonsLearned?: string;
   [key: string]: unknown;
 }
 
@@ -126,17 +141,17 @@ export default function TransparencyReportsPage() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-semibold mb-2">
-                        {report.ngoProfile?.organizationName || 'Unknown NGO'}
+                        {(typeof report.ngoProfile === 'object' && report.ngoProfile && 'organizationName' in report.ngoProfile && typeof report.ngoProfile.organizationName === 'string') ? report.ngoProfile.organizationName : 'Unknown NGO'}
                       </h3>
                       <p className="text-sm text-gray-600">
                         {report.reportFrequency === 'QUARTERLY' ? 'Quarterly' : 'Annual'} Report
                       </p>
                       <p className="text-sm text-gray-500">
-                        Period: {new Date(report.periodStart).toLocaleDateString()} -{' '}
-                        {new Date(report.periodEnd).toLocaleDateString()}
+                        Period: {(typeof report.periodStart === 'string' || typeof report.periodStart === 'number') ? new Date(report.periodStart).toLocaleDateString() : ''} -{' '}
+                        {(typeof report.periodEnd === 'string' || typeof report.periodEnd === 'number') ? new Date(report.periodEnd).toLocaleDateString() : ''}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">
-                        Submitted: {new Date(report.submittedAt).toLocaleDateString()}
+                        Submitted: {(typeof report.submittedAt === 'string' || typeof report.submittedAt === 'number') ? new Date(report.submittedAt).toLocaleDateString() : ''}
                       </p>
                     </div>
                     <button
@@ -151,19 +166,19 @@ export default function TransparencyReportsPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                       <div className="text-gray-500">Campaigns</div>
-                      <div className="font-medium">{report.campaignCount}</div>
+                      <div className="font-medium">{typeof report.campaignCount === 'number' ? report.campaignCount : 0}</div>
                     </div>
                     <div>
                       <div className="text-gray-500">Items Distributed</div>
-                      <div className="font-medium">{report.itemsDistributed}</div>
+                      <div className="font-medium">{typeof report.itemsDistributed === 'number' ? report.itemsDistributed : 0}</div>
                     </div>
                     <div>
                       <div className="text-gray-500">Beneficiaries</div>
-                      <div className="font-medium">{report.beneficiariesReached}</div>
+                      <div className="font-medium">{typeof report.beneficiariesReached === 'number' ? report.beneficiariesReached : 0}</div>
                     </div>
                     <div>
                       <div className="text-gray-500">Locations</div>
-                      <div className="font-medium">{report.locationsServed?.length || 0}</div>
+                      <div className="font-medium">{Array.isArray(report.locationsServed) ? report.locationsServed.length : 0}</div>
                     </div>
                   </div>
                 </div>
@@ -184,40 +199,39 @@ export default function TransparencyReportsPage() {
               <div>
                 <h4 className="font-semibold mb-2">Organization</h4>
                 <p className="text-gray-700">
-                  {selectedReport.ngoProfile?.organizationName || 'Unknown'}
+                  {(typeof selectedReport.ngoProfile === 'object' && selectedReport.ngoProfile && 'organizationName' in selectedReport.ngoProfile && typeof selectedReport.ngoProfile.organizationName === 'string') ? selectedReport.ngoProfile.organizationName : 'Unknown'}
                 </p>
               </div>
 
               <div>
                 <h4 className="font-semibold mb-2">Reporting Period</h4>
                 <p className="text-gray-700">
-                  {new Date(selectedReport.periodStart).toLocaleDateString()} -{' '}
-                  {new Date(selectedReport.periodEnd).toLocaleDateString()}
+                  {(typeof selectedReport.periodStart === 'string' || typeof selectedReport.periodStart === 'number') ? new Date(selectedReport.periodStart).toLocaleDateString() : ''} -{' '}
+                  {(typeof selectedReport.periodEnd === 'string' || typeof selectedReport.periodEnd === 'number') ? new Date(selectedReport.periodEnd).toLocaleDateString() : ''}
                 </p>
               </div>
 
-              {/* Campaign Summary */}
               <div>
                 <h4 className="font-semibold mb-2">Campaign Summary</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <div className="text-sm text-gray-500">Campaigns</div>
-                    <div className="font-medium">{selectedReport.campaignCount}</div>
+                    <div className="font-medium">{typeof selectedReport.campaignCount === 'number' ? selectedReport.campaignCount : 0}</div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Items Distributed</div>
-                    <div className="font-medium">{selectedReport.itemsDistributed}</div>
+                    <div className="font-medium">{typeof selectedReport.itemsDistributed === 'number' ? selectedReport.itemsDistributed : 0}</div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Beneficiaries</div>
-                    <div className="font-medium">{selectedReport.beneficiariesReached}</div>
+                    <div className="font-medium">{typeof selectedReport.beneficiariesReached === 'number' ? selectedReport.beneficiariesReached : 0}</div>
                   </div>
                   <div>
                     <div className="text-sm text-gray-500">Locations</div>
-                    <div className="font-medium">{selectedReport.locationsServed?.length || 0}</div>
+                    <div className="font-medium">{Array.isArray(selectedReport.locationsServed) ? selectedReport.locationsServed.length : 0}</div>
                   </div>
                 </div>
-                {selectedReport.locationsServed && selectedReport.locationsServed.length > 0 && (
+                {Array.isArray(selectedReport.locationsServed) && selectedReport.locationsServed.length > 0 && (
                   <div className="mt-2">
                     <div className="text-sm text-gray-500 mb-1">Locations:</div>
                     <div className="flex flex-wrap gap-2">
@@ -231,13 +245,12 @@ export default function TransparencyReportsPage() {
                 )}
               </div>
 
-              {/* Financial Summary */}
-              {(selectedReport.fundsReceivedMin || selectedReport.fundsReceivedMax) && (
+              {(typeof selectedReport.fundsReceivedMin === 'number' || typeof selectedReport.fundsReceivedMax === 'number' || selectedReport.fundsUtilized) && (
                 <div>
                   <h4 className="font-semibold mb-2">Financial Summary</h4>
                   <p className="text-gray-700">
-                    Funds Received: {selectedReport.fundsReceivedMin && `$${selectedReport.fundsReceivedMin.toLocaleString()}`}
-                    {selectedReport.fundsReceivedMax && ` - $${selectedReport.fundsReceivedMax.toLocaleString()}`}
+                    Funds Received: {typeof selectedReport.fundsReceivedMin === 'number' && `$${selectedReport.fundsReceivedMin.toLocaleString()}`}
+                    {typeof selectedReport.fundsReceivedMax === 'number' && ` - $${selectedReport.fundsReceivedMax.toLocaleString()}`}
                   </p>
                   {selectedReport.fundsUtilized && (
                     <div className="mt-2 text-sm">
@@ -250,30 +263,28 @@ export default function TransparencyReportsPage() {
                 </div>
               )}
 
-              {/* Success Stories */}
-              {selectedReport.successStories && selectedReport.successStories.length > 0 && (
+              {Array.isArray(selectedReport.successStories) && selectedReport.successStories.length > 0 && (
                 <div>
                   <h4 className="font-semibold mb-2">Success Stories</h4>
                   <div className="space-y-3">
                     {selectedReport.successStories?.map((story: Record<string, unknown>, i: number) => (
                       <div key={i} className="border rounded p-3">
-                        <h5 className="font-medium">{story.title}</h5>
-                        <p className="text-sm text-gray-600 mt-1">{story.description}</p>
+                        <h5 className="font-medium">{typeof story.title === 'string' ? story.title : ''}</h5>
+                        <p className="text-sm text-gray-600 mt-1">{typeof story.description === 'string' ? story.description : ''}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Challenges & Lessons */}
-              {selectedReport.challenges && (
+              {typeof selectedReport.challenges === 'string' && (
                 <div>
                   <h4 className="font-semibold mb-2">Challenges</h4>
                   <p className="text-gray-700 whitespace-pre-wrap">{selectedReport.challenges}</p>
                 </div>
               )}
 
-              {selectedReport.lessonsLearned && (
+              {typeof selectedReport.lessonsLearned === 'string' && (
                 <div>
                   <h4 className="font-semibold mb-2">Lessons Learned</h4>
                   <p className="text-gray-700 whitespace-pre-wrap">{selectedReport.lessonsLearned}</p>

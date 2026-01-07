@@ -13,6 +13,7 @@ interface AuditLog {
   userId: string;
   timestamp: string;
   details?: Record<string, unknown>;
+  user?: { id: string; name: string; email: string };
 }
 
 interface PaginationInfo {
@@ -32,7 +33,7 @@ export default function AuditLogsPage() {
     endDate: '',
   });
   const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState<PaginationInfo | Record<string, unknown>>({});
+  const [pagination, setPagination] = useState<PaginationInfo>({ page: 1, limit: 50, total: 0, pages: 1 });
 
   const fetchLogs = async (): Promise<void> => {
     try {
@@ -46,7 +47,13 @@ export default function AuditLogsPage() {
         endDate: filters.endDate || undefined,
       });
       setLogs(response.logs || []);
-      setPagination(response.pagination || {});
+      // Defensive: fallback to default PaginationInfo if missing
+      setPagination({
+        page: typeof response.pagination?.page === 'number' ? response.pagination.page : 1,
+        limit: typeof response.pagination?.limit === 'number' ? response.pagination.limit : 50,
+        total: typeof response.pagination?.total === 'number' ? response.pagination.total : (Array.isArray(response.logs) ? response.logs.length : 0),
+        pages: typeof response.pagination?.pages === 'number' ? response.pagination.pages : 1,
+      });
     } finally {
       setLoading(false);
     }
@@ -115,7 +122,7 @@ export default function AuditLogsPage() {
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-2xl font-bold">Audit Logs</h2>
             <div className="text-sm text-gray-500">
-              Total: {pagination.total || 0}
+              Total: {pagination.total}
             </div>
           </div>
 
@@ -237,7 +244,7 @@ export default function AuditLogsPage() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm">
-                          {log.user?.name || log.userId || 'System'}
+                          {log.user && log.user.name ? log.user.name : log.userId || 'System'}
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-500">
                           {log.details ? (
@@ -258,7 +265,7 @@ export default function AuditLogsPage() {
               </div>
 
               {/* Pagination */}
-              {pagination.totalPages > 1 && (
+              {pagination.pages > 1 && (
                 <div className="flex items-center justify-between mt-6">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -268,11 +275,11 @@ export default function AuditLogsPage() {
                     Previous
                   </button>
                   <span className="text-sm text-gray-500">
-                    Page {page} of {pagination.totalPages}
+                    Page {page} of {pagination.pages}
                   </span>
                   <button
-                    onClick={() => setPage(p => Math.min(pagination.totalPages, p + 1))}
-                    disabled={page === pagination.totalPages}
+                    onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
+                    disabled={page === pagination.pages}
                     className="px-4 py-2 border rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
                   >
                     Next

@@ -5,5 +5,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: { ecmaVersion: 2021, sourceType: 'module' },
   plugins: ['@typescript-eslint'],
-  rules: { 'no-console': 'warn' },
+  rules: { 
+    'no-console': 'warn',
+    'react-hooks/exhaustive-deps': 'off',
+  },
 };

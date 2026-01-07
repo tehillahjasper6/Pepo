@@ -1,3 +1,90 @@
+// ════════════════════════════════════════════════════════════════════════════
+// COMMUNITY: NEIGHBORHOOD CIRCLES
+// ════════════════════════════════════════════════════════════════════════════
+
+model NeighborhoodCircle {
+  id           String   @id @default(uuid())
+  name         String
+  description  String
+  city         String
+  neighborhood String
+  radius       Float    @default(5)
+  createdBy    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  members      NeighborhoodCircleMember[]
+  posts        NeighborhoodCirclePost[]
+
+  @@unique([city, neighborhood, name])
+  @@index([city])
+  @@index([neighborhood])
+  @@map("neighborhood_circles")
+}
+
+model NeighborhoodCircleMember {
+  id         String   @id @default(uuid())
+  userId     String
+  circleId   String
+  joinedAt   DateTime @default(now())
+
+  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  circle NeighborhoodCircle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, circleId])
+  @@index([circleId])
+  @@index([userId])
+  @@map("neighborhood_circle_members")
+}
+
+model NeighborhoodCirclePost {
+  id         String   @id @default(uuid())
+  circleId   String
+  userId     String
+  type       String // announcement, request, event
+  title      String
+  description String
+  image      String?
+  createdAt  DateTime @default(now())
+
+  circle NeighborhoodCircle @relation(fields: [circleId], references: [id], onDelete: Cascade)
+  user   User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([circleId])
+  @@index([userId])
+  @@map("neighborhood_circle_posts")
+}
+// ════════════════════════════════════════════════════════════════════════════
+// ANALYTICS & PRIVACY
+// ════════════════════════════════════════════════════════════════════════════
+
+model UserAnalyticsConsent {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  analyticsEnabled Boolean  @default(true)
+  essentialOnly    Boolean  @default(false)
+  consentDate      DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_analytics_consent")
+}
+
+model AnalyticsEvent {
+  id         String   @id @default(uuid())
+  userId     String?
+  eventName  String
+  eventData  Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([eventName])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
 // PEPO Database Schema
 generator client {
   provider = "prisma-client-js"
@@ -184,9 +271,18 @@ model User {
   digestPreference        UserDigestPreference?
   campaignReminderLogs    CampaignReminderLog[]
   followSuggestions       FollowSuggestion[]
+  analyticsConsent        UserAnalyticsConsent?
+  analyticsEvents         AnalyticsEvent[]
+  neighborhoodCircleMemberships NeighborhoodCircleMember[]
+  neighborhoodCirclePosts NeighborhoodCirclePost[]
 
   @@index([email])
+  @@index([phone])
   @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([googleId])
+  @@index([appleId])
   @@map("users")
 }
 
@@ -717,6 +813,10 @@ model Giveaway {
   @@index([status])
   @@index([campaignId])
   @@index([closedAt])
+    @@index([userId, status])
+    @@index([status, expiresAt])
+    @@index([category])
+    @@index([publishedAt])
   @@map("giveaways")
 }
 
@@ -732,8 +832,10 @@ model Participant {
   giveaway Giveaway @relation(fields: [giveawayId], references: [id], onDelete: Cascade)
 
   @@unique([userId, giveawayId])
+  @@index([userId])
   @@index([giveawayId])
   @@index([status])
+  @@index([createdAt])
   @@map("participants")
 }
 
@@ -775,6 +877,9 @@ model Message {
   @@index([giveawayId])
   @@index([senderId])
   @@index([receiverId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([senderId, receiverId])
   @@map("messages")
 }
 
@@ -798,6 +903,9 @@ model Notification {
 
   @@index([userId])
   @@index([isRead])
+  @@index([createdAt])
+  @@index([userId, isRead])
+  @@index([type])
   @@map("notifications")
 }
 

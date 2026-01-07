@@ -1,11 +1,39 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PepoBee } from '@/components/PepoBee';
-import { useEffect } from 'react';
 import { apiClient } from '@/lib/apiClient';
 import Badge from '@/components/Badge';
+import Loading from '@/components/Loading';
 
+function StatCard({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
+  const colorMap: Record<string, string> = {
+    primary: 'from-primary-500 to-primary-600',
+    secondary: 'from-secondary-500 to-secondary-600',
+    info: 'from-info-500 to-blue-600',
+  };
+  return (
+    <div className={`bg-gradient-to-br ${colorMap[color]} text-white rounded-lg shadow-card p-6`}>
+      <div className="text-3xl mb-2">{icon}</div>
+      <div className="text-4xl font-bold">{value}</div>
+      <div className="text-white/80 text-sm mt-1">{label}</div>
+    </div>
+  );
+}
+
+function SettingItem({ icon, title, description }: { icon: string; title: string; description: string }) {
+  return (
+    <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="flex items-center">
+        <span className="text-2xl mr-3">{icon}</span>
+        <div>
+          <div className="font-medium">{title}</div>
+          <div className="text-sm text-gray-600">{description}</div>
+        </div>
+      </div>
+    </button>
+  );
+}
 export default function ProfilePage() {
   const [stats] = useState({
     given: 0,
@@ -13,6 +41,7 @@ export default function ProfilePage() {
     participated: 0,
   });
   const [badges, setBadges] = useState<Array<{ id: string; [key: string]: unknown }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
@@ -27,9 +56,14 @@ export default function ProfilePage() {
       } catch (e) {
         // ignore
       }
+      setIsLoading(false);
     })();
     return () => { mounted = false; };
   }, []);
+
+  if (isLoading) {
+    return <Loading message="Loading your profile..." />;
+  }
 
   return (
     <div className="min-h-screen bg-background-default">
@@ -145,36 +179,6 @@ export default function ProfilePage() {
         </div>
       </div>
     </div>
-  );
-}
-
-function StatCard({ icon, label, value, color }: { icon: string; label: string; value: number; color: string }) {
-  const colorMap: Record<string, string> = {
-    primary: 'from-primary-500 to-primary-600',
-    secondary: 'from-secondary-500 to-secondary-600',
-    info: 'from-info-500 to-blue-600',
-  };
-
-  return (
-    <div className={`bg-gradient-to-br ${colorMap[color]} text-white rounded-lg shadow-card p-6`}>
-      <div className="text-3xl mb-2">{icon}</div>
-      <div className="text-4xl font-bold">{value}</div>
-      <div className="text-white/80 text-sm mt-1">{label}</div>
-    </div>
-  );
-}
-
-function SettingItem({ icon, title, description }: { icon: string; title: string; description: string }) {
-  return (
-    <button className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-50 transition-colors">
-      <div className="flex items-center">
-        <span className="text-2xl mr-3">{icon}</span>
-        <div>
-          <div className="font-medium">{title}</div>
-          <div className="text-sm text-gray-600">{description}</div>
-        </div>
-      </div>
-    </button>
   );
 }
 

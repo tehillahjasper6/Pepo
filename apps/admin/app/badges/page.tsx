@@ -11,6 +11,9 @@ interface BadgeAssignment {
   awardedAt: string;
   badge?: Badge;
   user?: { id: string; name: string; email: string };
+  ngoProfile?: { id: string; organizationName: string; registrationNumber: string };
+  reason?: string;
+  isRevoked?: boolean;
 }
 
 interface Badge {
@@ -35,8 +38,8 @@ export default function BadgesAdminPage() {
           adminApiClient.get('/badges/admin/assignments'),
           adminApiClient.get('/badges/definitions'),
         ]);
-        setAssignments(resAssignments || []);
-        setBadges(resBadges || []);
+        setAssignments(Array.isArray(resAssignments) ? resAssignments : []);
+        setBadges(Array.isArray(resBadges) ? resBadges : []);
       } finally {
         setLoading(false);
       }
@@ -163,7 +166,7 @@ export default function BadgesAdminPage() {
                     <tr key={a.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{emojiForIcon(a.badge?.icon)}</span>
+                          <span className="text-lg">{emojiForIcon(a.badge?.icon ?? '')}</span>
                           <span className="font-medium text-sm">{a.badge?.name}</span>
                         </div>
                       </td>

@@ -20,16 +20,16 @@ describe('DigestService', () => {
               findUnique: jest.fn(),
               create: jest.fn(),
               update: jest.fn(),
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
             },
             follow: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
             },
             giveaway: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
             },
             campaign: {
-              findMany: jest.fn(),
+              findMany: jest.fn().mockResolvedValue([]), // Always return array
             },
             participant: {
               count: jest.fn(),
