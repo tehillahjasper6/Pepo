@@ -38,8 +38,8 @@
     "@rive-app/react-canvas": "^4.25.1",
     "lottie-react": "^2.4.1",
     "next": "^16.1.1",
-    "react": "^19.2.3",
-    "react-dom": "^19.2.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "react-native-web": "^0.19.13"
   }
 }

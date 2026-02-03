@@ -1,0 +1,6 @@
+services:
+  pepo:
+    image: pepo
+    build:
+      context: .
+      dockerfile: ./Dockerfile
